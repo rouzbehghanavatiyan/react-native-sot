@@ -69,7 +69,7 @@ export default function LoginScreen() {
               style={styles.logo}
             />
             <Heading
-              size="xl"
+              size="lg"
               fontFamily={"logoFont"}
               color={Colors.primary_dark}
               mb="2"
@@ -112,12 +112,14 @@ export default function LoginScreen() {
             </Link>
 
             <BaseButton
+            borderRadius={12}
               mt="2"
               onPress={handleLogin}
               isLoading={loading}
               iconName="login"
+              bg={Colors.primary_dark}
             >
-              Sign In
+              Log in
             </BaseButton>
           </VStack>
 
@@ -127,7 +129,7 @@ export default function LoginScreen() {
             </Text>
             <Link
               _text={{
-                color: "primary.500",
+                color: Colors.primary_dark,
                 fontWeight: "medium",
                 fontSize: "sm",
               }}
@@ -143,7 +145,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   logo: {
-    marginTop:5,
-    borderRadius:100
+    marginBottom: 10,
+    borderRadius: 100,
   },
 });
