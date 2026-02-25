@@ -80,7 +80,6 @@ export default function LoginScreen() {
               Login
             </Text>
           </Box>
-
           <VStack space={4}>
             <BaseInput
               placeholder="Username"
@@ -144,6 +143,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   logo: {
-    marginTop:5
+    marginTop:5,
+    borderRadius:100
   },
 });
