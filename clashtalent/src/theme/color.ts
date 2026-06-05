@@ -1,19 +1,52 @@
-export const Colors = {
-  primary_dark: "#19215D",
-  secondary: "#10153D",
-  background: "#F7F7F7",
-  white: "#FFFFFF",
-  black: "#000000",
+import { PaletteColor } from "./type";
 
-  gray100: "#F5F5F5",
-  gray200: "#E5E5E5",
-  gray300: "#D1D1D1",
-  gray500: "#9E9E9E",
-  gray700: "#616161",
-
-  success: "#22C55E",
-  warning: "#FACC15",
-  danger: "#EF4444",
-  transparent: "transparent",
+export const themes = {
+  light: {
+    background: "$white",
+    color: "$gray900",
+    primary: "$primary500",
+    borderColor: "$gray100",
+  },
+  dark: {
+    background: "$gray900",
+    color: "$white",
+    primary: "$primary600",
+    borderColor: "$gray500",
+  },
 };
- 
+export type ColorType =
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error";
+
+export const palette: Record<ColorType, PaletteColor> = {
+  primary: {
+    bg: "$primaryMain",
+    border: "$primaryMain",
+    text: "$primaryMain",
+    contrast: "$primaryContrastText",
+  },
+  secondary: {
+    bg: "$secondaryMain",
+    border: "$secondaryMain",
+    text: "$secondaryMain",
+    contrast: "$secondaryContrastText",
+  },
+  success: {
+    bg: "$successMain",
+    border: "$successMain",
+    text: "$successMain",
+  },
+  warning: {
+    bg: "$warningMain",
+    border: "$warningMain",
+    text: "$warningMain",
+  },
+  error: {
+    bg: "$errorMain",
+    border: "$errorMain",
+    text: "$errorMain",
+  },
+};

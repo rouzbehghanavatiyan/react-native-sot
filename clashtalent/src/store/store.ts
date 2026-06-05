@@ -1,9 +1,11 @@
-import { configureStore } from '@reduxjs/toolkit';
-import mainReducer from '@/src/slices/main';
+import mainReducer from "@/src/slices/main";
+import videoSlice from "@/src/slices/video";
+import { configureStore } from "@reduxjs/toolkit";
 
 export const store = configureStore({
   reducer: {
     main: mainReducer,
+    video: videoSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

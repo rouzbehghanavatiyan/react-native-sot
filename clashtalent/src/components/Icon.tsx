@@ -1,5 +1,5 @@
-import React from "react";
 import { MaterialIcons } from "@expo/vector-icons";
+import React from "react";
 
 interface IconProps {
   name: string;
@@ -9,20 +9,18 @@ interface IconProps {
   style?: any;
 }
 
- const formatIconName = (name: string) => {
+const formatIconName = (name: string) => {
   if (!name) return "";
   const withoutIcon = name.replace(/Icon$/, "");
 
-  const kebab = withoutIcon
-    .replace(/([a-z])([A-Z])/g, "$1-$2")
-    .toLowerCase();
+  const kebab = withoutIcon.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
   return kebab;
 };
 
 export const Icon: React.FC<IconProps> = ({
   name,
   size = 24,
-  color = "#ff0000",
+  color = "#444444",
   onPress,
   style,
 }) => {

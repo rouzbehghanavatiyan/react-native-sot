@@ -1,11 +1,9 @@
-import { View, Image, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { getImageUrl } from "@/src/utils/fileHelper";
+import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Icon } from "./Icon";
 const VideoGroup = ({ group, onPress }: any) => {
   const imageTop = getImageUrl(group?.attachmentInserted);
   const imageBottom = getImageUrl(group?.attachmentMatched);
-
-  console.log(group);
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>

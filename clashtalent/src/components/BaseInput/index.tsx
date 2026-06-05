@@ -1,71 +1,105 @@
 import React from "react";
-import { Input, FormControl, IInputProps, Icon } from "native-base";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Input, InputProps, styled } from "tamagui";
 
-interface BaseInputProps extends IInputProps {
-  label?: string;
-  iconName?: React.ComponentProps<typeof MaterialIcons>["name"];
-  errorMessage?: string;
-  isInvalid?: boolean;
+type InputVariant = "outline" | "filled" | "unstyled";
+type ColorType = "primary" | "secondary" | "success" | "warning" | "error";
+
+export interface BaseInputProps extends InputProps {
+  variant?: InputVariant;
+  colorType?: ColorType;
+  hasError?: boolean;
 }
 
-const BaseInput: React.FC<BaseInputProps> = ({
-  label,
-  iconName,
-  errorMessage,
-  isInvalid,
-  ...props
-}) => {
-  return (
-    <FormControl isInvalid={isInvalid}>
-      {label && <FormControl.Label>{label}</FormControl.Label>}
+const StyledInput: any = styled(Input, {
+  name: "BaseInput",
 
-      <Input
-        size="lg"
-        variant="outline"
-        bg="white"
-        backgroundColor="white"
+  borderRadius: "$4",
+  borderWidth: 1,
+  paddingHorizontal: "$3",
+  height: 44,
 
-        borderColor="gray.300"
+  focusStyle: {
+    outlineWidth: 0,
+  },
 
-        _focus={{
-          bg: "white",
-          backgroundColor: "white",
-          borderColor: "primary.500",
-        }}
+  variants: {
+    variant: {
+      outline: {
+        backgroundColor: "$background",
+      },
+      filled: {
+        backgroundColor: "$backgroundHover",
+        borderColor: "transparent",
+      },
+      unstyled: {
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        paddingHorizontal: 0,
+      },
+    },
 
-        _hover={{
-          bg: "white",
-          backgroundColor: "white",
-        }}
+    disabledState: {
+      true: {
+        opacity: 0.6,
+        pointerEvents: "none",
+      },
+      false: {
+        opacity: 1,
+      },
+    },
+  } as const,
 
-        _disabled={{
-          bg: "white",
-          backgroundColor: "white",
-          opacity: 1,
-        }}
+  defaultVariants: {
+    variant: "outline",
+    disabledState: false,
+  },
+});
 
-        InputLeftElement={
-          iconName ? (
-            <Icon
-              as={<MaterialIcons name={iconName} />}
-              size={5}
-              ml="2"
-              color="muted.400"
-            />
-          ) : undefined
-        }
+const colorMap: Record<ColorType, string> = {
+  primary: "$primaryMain",
+  secondary: "$secondaryMain",
+  success: "$successMain",
+  warning: "$warningMain",
+  error: "$errorMain",
+};
 
+const BaseInput = React.forwardRef<any, BaseInputProps>(
+  (
+    {
+      variant = "outline",
+      colorType = "primary",
+      hasError = false,
+      disabled,
+      ...props
+    },
+    ref,
+  ) => {
+    const mainColor = colorMap[colorType];
+    const borderColor = hasError ? "$red10" : mainColor;
+
+    const dynamicStyles =
+      variant === "unstyled"
+        ? {}
+        : {
+            borderColor,
+            focusStyle: {
+              borderColor,
+            },
+          };
+
+    return (
+      <StyledInput
+        ref={ref}
+        variant={variant}
+        disabledState={Boolean(disabled)}
+        disabled={disabled}
+        {...dynamicStyles}
         {...props}
       />
+    );
+  },
+);
 
-      {errorMessage && (
-        <FormControl.ErrorMessage>
-          {errorMessage}
-        </FormControl.ErrorMessage>
-      )}
-    </FormControl>
-  );
-};
+BaseInput.displayName = "BaseInput";
 
 export default BaseInput;

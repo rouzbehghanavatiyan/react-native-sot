@@ -27,17 +27,24 @@ const initialPagination: Pagination = {
 };
 
 const initialDataState: DataState = {
-  pagination: initialPagination,
+  pagination: { ...initialPagination },
   data: [],
 };
 
-const initialState: MainState = {
+const initialState: any = {
   showTimerButtn: false,
+  allFollingList: {},
   lastMatch: [],
   unreadMessagesCount: 0,
   watchVideo: { ...initialDataState },
   homeMatch: { ...initialDataState },
   showWatchMatch: { ...initialDataState },
+  allFollowerList: [],
+  category: [],
+  userLogin: {},
+  userId: 0,
+  socketConfig: null,
+  userOnlines: null,
 };
 
 const mainSlice = createSlice({
@@ -48,80 +55,127 @@ const mainSlice = createSlice({
     setPaginationWatch: (state, action: PayloadAction<Pagination>) => {
       state.watchVideo.pagination = action.payload;
     },
-
     setWatchData: (state, action: PayloadAction<any[]>) => {
       state.watchVideo.data = action.payload;
     },
-
     appendWatchData: (state, action: PayloadAction<any[]>) => {
       state.watchVideo.data = [...state.watchVideo.data, ...action.payload];
     },
-
-    // ---------------- HOME ----------------
+    RsetAllFollowerList: (state, action: PayloadAction<any[]>) => {
+      state.allFollowerList = action.payload;
+    },
+    RsetAllFollingList: (state, action: PayloadAction<any[]>) => {
+      state.allFollingList = action.payload;
+    },
+    RsetLastMatch: (state, action: PayloadAction<any[]>) => {
+      state.lastMatch = action.payload;
+    },
+    RsetCategory: (state, action: PayloadAction<any[]>) => {
+      state.category = action.payload;
+    },
+    RsetUserLogin: (state, action: PayloadAction<any>) => {
+      state.userLogin = action.payload;
+    },
+    RsetUserId: (state, action: PayloadAction<any>) => {
+      state.userId = action.payload;
+    },
+    RsetSocketConfig: (state, action: PayloadAction<any>) => {
+      state.socketConfig = action.payload;
+    },
+    RsetGiveUserOnlines: (state, action: PayloadAction<any>) => {
+      state.userOnlines = action.payload;
+    },
     setPaginationHome: (state, action: PayloadAction<Pagination>) => {
       state.homeMatch.pagination = action.payload;
     },
-
     setHomeData: (state, action: PayloadAction<any[]>) => {
       state.homeMatch.data = action.payload;
     },
-
+    RsetShowWatch: (state, action) => {
+      state.showWatchMatch.data = action.payload;
+    },
     appendHomeData: (state, action: PayloadAction<any[]>) => {
       state.homeMatch.data = [...state.homeMatch.data, ...action.payload];
     },
-
-    // ---------------- SHOW WATCH ----------------
     setPaginationShowWatch: (state, action: PayloadAction<Pagination>) => {
       state.showWatchMatch.pagination = action.payload;
     },
-
     setShowWatchData: (state, action: PayloadAction<any[]>) => {
       state.showWatchMatch.data = action.payload;
     },
-
-    appendShowWatchData: (state, action: PayloadAction<any[]>) => {
+    appendShowWatch: (state, action) => {
       state.showWatchMatch.data = [
         ...state.showWatchMatch.data,
         ...action.payload,
       ];
     },
-
-    // ---------------- OTHER ----------------
     setUnreadMessagesCount: (state, action: PayloadAction<number>) => {
       state.unreadMessagesCount = action.payload;
     },
-
     setLastMatch: (state, action: PayloadAction<any[]>) => {
       state.lastMatch = action.payload;
     },
-
     setShowTimerButton: (state, action: PayloadAction<boolean>) => {
       state.showTimerButtn = action.payload;
     },
-
     resetWatchState: (state) => {
       state.watchVideo = { ...initialDataState };
+    },
+    resetHomeState: (state) => {
+      state.homeMatch = { ...initialDataState };
+    },
+    resetShowWatchState: (state) => {
+      state.showWatchMatch = {
+        data: [],
+        pagination: {
+          take: 6,
+          skip: 0,
+          hasMore: true,
+        },
+      };
+    },
+    resetAllFeeds: (state) => {
+      state.watchVideo = { ...initialDataState };
+      state.homeMatch = { ...initialDataState };
+      state.showWatchMatch = { ...initialDataState };
     },
   },
 });
 
 export const {
+  // watch
   setPaginationWatch,
   setWatchData,
   appendWatchData,
 
+  // home
   setPaginationHome,
   setHomeData,
   appendHomeData,
 
+  // showWatch
   setPaginationShowWatch,
   setShowWatchData,
-  appendShowWatchData,
+  appendShowWatch,
 
+  // other
   setUnreadMessagesCount,
   setLastMatch,
   setShowTimerButton,
+
+  RsetUserId,
   resetWatchState,
+  resetHomeState,
+  resetShowWatchState,
+  resetAllFeeds,
+  RsetAllFollowerList,
+  RsetAllFollingList,
+  RsetLastMatch,
+  RsetCategory,
+  RsetUserLogin,
+  RsetSocketConfig,
+  RsetGiveUserOnlines,
+  RsetShowWatch,
 } = mainSlice.actions;
 
 export default mainSlice.reducer;

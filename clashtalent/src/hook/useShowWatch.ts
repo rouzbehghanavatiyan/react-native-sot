@@ -1,0 +1,218 @@
+import { AnyAction } from "@reduxjs/toolkit";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
+
+interface UseShowWatchProps {
+  inviteId?: string;
+
+  data: any[];
+  appendData: any;
+  pagination: {
+    skip: number;
+    take: number;
+    hasMore: boolean;
+  };
+  customFetchNextPage?: (params: any) => Promise<any[]>;
+  paginationAction: (payload: any) => AnyAction;
+  resetAction: () => AnyAction;
+  appendAction?: (payload: any[]) => AnyAction;
+  customCleanup?: () => void;
+}
+
+export const useShowWatch: any = ({
+  inviteId,
+  data,
+  pagination,
+  customFetchNextPage,
+  paginationAction,
+  resetAction,
+  appendAction,
+  customCleanup,
+}: UseShowWatchProps) => {
+  const dispatch = useAppDispatch();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const currentData = useAppSelector((state) => state.main.showWatchMatch.data);
+  const currentDataLength = currentData.length;
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+  const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(
+    null,
+  );
+  const [openDropdowns, setOpenDropdowns] = useState<Record<number, boolean>>(
+    {},
+  );
+
+  const isLoadingRef = useRef(false);
+  const paginationRef = useRef(pagination);
+  const dataRef = useRef(data);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  useEffect(() => {
+    paginationRef.current = pagination;
+  }, [pagination]);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
+  const defaultFetchNextPage = useCallback(async (params: any) => {
+    if (!params.inviteId) return [];
+
+    try {
+      const { attachmentListByInviteId }: any =
+        await import("../services/masterServices");
+
+      const res = await attachmentListByInviteId(params);
+
+      return res?.data ?? [];
+    } catch (error) {
+      console.error("fetch error:", error);
+      return [];
+    }
+  }, []);
+
+  const fetchNextPage = useCallback(async () => {
+    if (isLoadingRef.current || !paginationRef.current.hasMore || !inviteId) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const fetcher = customFetchNextPage ?? defaultFetchNextPage;
+
+      const isFirstFetch = currentDataLength === 0;
+      const dynamicTake = isFirstFetch ? 6 : 3;
+
+      const exactSkip = currentDataLength;
+
+      const newData = await fetcher({
+        skip: exactSkip,
+        take: dynamicTake,
+        inviteId,
+      });
+
+      if (newData.length > 0 && appendAction) {
+        dispatch(appendAction(newData));
+      }
+
+      dispatch(
+        paginationAction({
+          take: 3,
+          skip: exactSkip + newData.length,
+          hasMore: newData.length > 0,
+        }),
+      );
+
+      return newData;
+    } catch (error) {
+      console.error("pagination error:", error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    inviteId,
+    currentDataLength,
+    dispatch,
+    appendAction,
+    customFetchNextPage,
+    defaultFetchNextPage,
+  ]);
+
+  const handleVideoPlay = useCallback((videoId: string) => {
+    setOpenDropdowns({});
+    setCurrentlyPlayingId((prev) => (prev === videoId ? null : videoId));
+  }, []);
+
+  const toggleDropdown = useCallback((index: number) => {
+    setOpenDropdowns((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  }, []);
+
+  const dropdownItems = useCallback(
+    (_data: any, _position: number, userSenderId: any) => [
+      {
+        label: "Send message",
+        icon: "mail",
+        onClick: () => {
+          console.log("Send message", userSenderId?.id);
+        },
+      },
+      { divider: true },
+      {
+        label: "Report",
+        icon: "flag",
+        onClick: () => console.log("report"),
+      },
+    ],
+    [],
+  );
+  const handleSlideChange = useCallback(
+    (index: number) => {
+      setActiveSlideIndex(index);
+
+      setOpenDropdowns({});
+
+      const currentVideoId =
+        dataRef.current[index]?.attachmentInserted?.attachmentId;
+
+      if (currentVideoId) {
+        setCurrentlyPlayingId(currentVideoId);
+      }
+
+      const threshold = dataRef.current.length - 3;
+
+      if (
+        index >= threshold &&
+        paginationRef.current.hasMore &&
+        !isLoadingRef.current
+      ) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage],
+  );
+
+  useEffect(() => {
+    if (data.length > 0 && !currentlyPlayingId) {
+      setCurrentlyPlayingId(data[0]?.attachmentInserted?.attachmentId);
+    }
+  }, [data, currentlyPlayingId]);
+
+  useEffect(() => {
+    if (inviteId && data.length === 0 && !isLoadingRef.current) {
+      fetchNextPage();
+    }
+  }, [inviteId, data.length, fetchNextPage]);
+
+  useEffect(() => {
+    return () => {
+      if (customCleanup) {
+        customCleanup();
+      } else {
+        dispatch(resetAction());
+      }
+    };
+  }, [dispatch, customCleanup]);
+
+  return {
+    data,
+    isLoading,
+    activeSlideIndex,
+    currentlyPlayingId,
+    openDropdowns,
+
+    handleVideoPlay,
+    toggleDropdown,
+    dropdownItems,
+    handleSlideChange,
+    fetchNextPage,
+    setOpenDropdowns,
+  };
+};

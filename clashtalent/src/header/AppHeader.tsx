@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useRouter, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { usePathname, useRouter } from "expo-router";
+import React, { useEffect, useMemo } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
 
 const AppHeader = () => {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname: any = usePathname();
   const dispatch = useAppDispatch();
 
   const socket = useAppSelector((state) => state.main.socketConfig);
@@ -19,7 +19,7 @@ const AppHeader = () => {
       isProfile: pathname === "/profile",
       isShowWatch: pathname === "/watch/show",
       isNotification: pathname === "/notification",
-      isMessage: pathname === "/privatemessage",
+      isMessage: pathname === "/privateMessage",
     }),
     [pathname],
   );
@@ -75,11 +75,11 @@ const AppHeader = () => {
   return (
     <View style={styles.header}>
       <View style={styles.leftSection}>
-        {!routes.isWatch && (
+        {/* {!routes.isWatch && (
           <TouchableOpacity onPress={handleBack}>
             <Ionicons name="arrow-back" size={24} color="#10153D" />
           </TouchableOpacity>
-        )}
+        )} */}
 
         <Text style={styles.logo}>Clash Talent</Text>
       </View>
@@ -108,9 +108,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
 
-    shadowColor: "#000",
+    shadowColor: "#222222",
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 1.6,
     shadowRadius: 4,
     elevation: 4,
   },

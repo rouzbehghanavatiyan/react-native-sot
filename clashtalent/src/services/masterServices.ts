@@ -23,3 +23,118 @@ export const subCategoryList = async (
     params: { categoryId },
   });
 };
+
+export const categoryList = async () => {
+  return await api.get("/categoryList");
+};
+
+export const followerList = async (
+  userId: number | string | null | undefined,
+) => {
+  return await api.get(`/followerList?userId=${userId}`);
+};
+
+export const profileAttachment = async (
+  userId: number | string | null | undefined,
+) => {
+  return await api.get(`/profileAttachment?userId=${userId}`);
+};
+
+export const followingList = async (
+  userId: number | string | null | undefined,
+) => {
+  return await api.get(`/followingList?userId=${userId}`);
+};
+
+export const followerAttachmentList = async (postData: any) => {
+  return await api.get(
+    `/followerAttachmentList?skip=${postData?.skip}&take=${postData?.take}&userId=${postData?.userIdLogin}`,
+  );
+};
+
+export const userAttachmentList = async (postData: any) => {
+  return await api.get(
+    `/userAttachmentList?skip=${postData?.skip}&take=${postData?.take}&userId=${postData?.id}`,
+  );
+};
+
+export const attachmentListByInviteId = async (postData: {
+  skip: number;
+  take: number;
+  inviteId: number | string;
+}) => {
+  const res = await api.get("/attachmentListByInviteId", {
+    params: {
+      skip: postData.skip,
+      take: postData.take,
+      inviteId: postData.inviteId,
+    },
+  });
+
+  return res.data;
+};
+export const addAttachment = async (postData: any) => {
+  return await api.post(`/addAttachment`, postData);
+};
+
+export const removeFollower = async (postData: any) => {
+  // const url = `${baseURL}/removeFollower`;
+  // return await axios.delete(url, { data: postData });
+};
+
+export const addFollower = async (postData: any) => {
+  // const url = `${baseURL}/addFollower`;
+  // return await axios.post(url, postData);
+};
+
+export const removeLike = async (postData: any) => {
+  // const url = `${baseURL}/removeLike`;
+  // return await axios.delete(url, { data: postData });
+};
+
+export const addLike = async (postData: any) => {
+  // const url = `${baseURL}/removeLike`;
+  // return await axios.delete(url, { data: postData });
+};
+
+export const modeList = async () => {
+  return await api.get(`/modeList`);
+};
+
+export const subSubCategoryList = async (
+  subCatId: number | string | null | undefined,
+) => {
+  return await api.get(`/subSubCategoryList?subCategoryId=${subCatId}`);
+};
+
+export const removeInvite = async (invId: number) => {
+  // const url = `${baseURL}/removeInvite?inviteId=${invId}`;
+  // return await axios.delete(url);
+};
+
+export const addInvite = async (postData: any) => {
+  // const url = `${baseURL}/addInvite`;
+  // return await axios.post(url, postData);
+};
+
+export const addMovie = async (data: any) => {
+  // const url = `${baseURL}/addMovie`;
+  // return await axios.post(url, data);
+};
+
+export const registerUser = async (postData: any) => {
+  return await api.post(`/registerUser`, postData);
+};
+
+export const addComment = async (postData: any) => {
+  return await api.post(`/addComment`, postData);
+};
+
+export const commentList = async (movieId: number) => {
+  return await api.get(`/commentList?movieId=${movieId}`);
+};
+
+export const removeComment = async (commentId: number) => {
+  // const url = `${baseURL}/removeComment?commentId=${commentId}`;
+  // return await axios.delete(url);
+};

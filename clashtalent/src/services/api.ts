@@ -1,14 +1,22 @@
-import axios from 'axios';
-import { getToken } from './tokenServices';
+import axios from "axios";
+import { router } from "expo-router"; // اگر از Expo Router استفاده می‌کنید
+import { getToken, removeToken } from "./tokenServices";
+// import { NavigationContainerRef } from '@react-navigation/native';
 
 const baseURL = process.env.EXPO_PUBLIC_VITE_URL;
 
 export const api = axios.create({
   baseURL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
+
+let navigationRef: any = null;
+
+export const setNavigationRef = (ref: any) => {
+  navigationRef = ref;
+};
 
 api.interceptors.request.use(async (config) => {
   const token = await getToken();
@@ -17,3 +25,30 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      console.log(originalRequest, "errorerrorerrorerrorerrorerror");
+      await removeToken();
+      router.replace("/login");
+      if (navigationRef) {
+        router.replace("/login");
+
+        // یا برای React Navigation
+        // navigationRef.navigate('Login');
+      }
+
+      return Promise.reject(error);
+    }
+
+    return Promise.reject(error);
+  },
+);

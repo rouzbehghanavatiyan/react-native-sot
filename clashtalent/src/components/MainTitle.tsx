@@ -1,33 +1,32 @@
-import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface PropType {
   title: string;
   handleBack?: () => void;
+  showBack?: boolean;
   rightComponent?: React.ReactNode;
 }
 
 const MainTitle: React.FC<PropType> = ({
   title,
   handleBack,
+  showBack,
   rightComponent,
 }) => {
+  const navigation = useNavigation();
+
+  const onBack =
+    handleBack ?? (showBack ? () => navigation.goBack() : undefined);
+
   return (
     <View style={styles.container}>
       <View style={styles.side}>
-        {handleBack && (
-          <TouchableOpacity onPress={handleBack}>
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color="#30f197"
-            />
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#7b8377" />
           </TouchableOpacity>
         )}
       </View>
@@ -51,12 +50,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#e5e5e5",
-    
   },
   side: {
     width: 50,
     justifyContent: "center",
     alignItems: "flex-start",
+  },
+  backButton: {
+    paddingHorizontal: 8,
   },
   center: {
     flex: 1,
