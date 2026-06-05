@@ -1,6 +1,5 @@
-// VideoSection.tsx
 import { VideoView, useVideoPlayer } from "expo-video";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Dimensions,
   StyleSheet,
@@ -9,22 +8,9 @@ import {
   View,
 } from "react-native";
 import { getImageUrl } from "../utils/fileHelper";
+import { logger } from "../utils/logger";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
-interface Props {
-  video: any;
-  positionVideo: number;
-  height: number; // ← از ShowWatchSlide میاد
-  score?: number;
-  result?: string;
-  countLiked?: number;
-  isLiked?: boolean;
-  showLiked?: boolean;
-  endTime?: boolean;
-  isPlaying: boolean;
-  onVideoPlay: () => void;
-}
 
 export default function VideoSection({
   score,
@@ -35,9 +21,7 @@ export default function VideoSection({
   video,
   positionVideo,
   height,
-}: Props) {
-  const [isMounted, setIsMounted] = React.useState(true);
-
+}: any) {
   const videoUrl =
     positionVideo === 0
       ? getImageUrl(video?.attachmentInserted)
@@ -45,26 +29,26 @@ export default function VideoSection({
 
   const player = useVideoPlayer(videoUrl ?? "", (p) => {
     p.loop = true;
+    p.muted = false;
   });
 
-  React.useEffect(() => {
-    return () => {
-      setIsMounted(false);
-    };
-  }, []);
+  logger.info("videoUrl", videoUrl);
+  logger.info("isPlaying", isPlaying);
+  logger.info("height", height);
 
-  React.useEffect(() => {
-    if (!player || !isMounted) return;
-    try {
-      if (isPlaying) {
-        player.play();
-      } else {
-        player.pause();
-      }
-    } catch (e) {
-      // player already released
+  useEffect(() => {
+    if (!player) return;
+
+    if (isPlaying) {
+      player.play();
+    } else {
+      player.pause();
     }
-  }, [isPlaying, player, isMounted]);
+  }, [player, isPlaying]);
+
+  if (!videoUrl) {
+    return <View style={[styles.placeholder, { height }]} />;
+  }
 
   return (
     <View style={[styles.container, { height }]}>
@@ -73,18 +57,14 @@ export default function VideoSection({
         activeOpacity={1}
         onPress={onVideoPlay}
       >
-        {isMounted && videoUrl ? (
-          <VideoView
-            player={player}
-            style={{ width: SCREEN_WIDTH, height }}
-            allowsFullscreen={false}
-            allowsPictureInPicture={false}
-            nativeControls={false}
-            contentFit="cover"
-          />
-        ) : (
-          <View style={[styles.placeholder, { height }]} />
-        )}
+        <VideoView
+          player={player}
+          style={{ width: SCREEN_WIDTH, height }}
+          allowsFullscreen={false}
+          allowsPictureInPicture={false}
+          nativeControls={false}
+          contentFit="cover"
+        />
       </TouchableOpacity>
 
       <View style={styles.topOverlay} pointerEvents="none">

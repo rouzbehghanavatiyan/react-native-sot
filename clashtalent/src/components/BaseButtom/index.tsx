@@ -82,6 +82,7 @@ export const BaseButton = forwardRef<any, BaseButtonProps>(
         {...styles}
         {...rest}
       >
+        
         {children}
       </StyledButton>
     );

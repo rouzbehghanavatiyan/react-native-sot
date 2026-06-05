@@ -1,15 +1,3 @@
-import { MaterialIcons } from "@expo/vector-icons"; // برای دکمه بستن مدال
-import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useEffect, useState } from "react";
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  RefreshControl,
-  SafeAreaView,
-} from "react-native";
-import { Spinner, Text, XStack, YStack } from "tamagui";
-
 import ProfileAchievements from "@/src/components/ProfileAchievements";
 import ProfileBio from "@/src/components/ProfileBio";
 import ProfileHeader from "@/src/components/ProfileHeader";
@@ -17,6 +5,12 @@ import { usePagination } from "@/src/hook/usePagination";
 import { userAttachmentList } from "@/src/services/masterServices";
 import { useAppSelector } from "@/src/store/reduxHookType";
 import { getImageUrl } from "@/src/utils/fileHelper";
+import { logger } from "@/src/utils/logger";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
+import { FlatList, RefreshControl, SafeAreaView } from "react-native";
+import { Spinner, YStack } from "tamagui";
+import VideosProfileItem from "../profile/VideosProfileItem";
 
 const Profile: React.FC = () => {
   const navigation = useNavigation();
@@ -26,11 +20,11 @@ const Profile: React.FC = () => {
   const userIdWhantToShow = route.params?.userData;
   const socket = main.socketConfig;
   const userId = main?.userLogin?.user?.id;
-
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [percentage, setPercentage] = useState<number>(0);
   const [videoLikes, setVideoLikes] = useState<Record<string, number>>({});
 
-  // جایگزین useDisclose نیتیو-بیس
   const [isOpen, setIsOpen] = useState(false);
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
@@ -48,6 +42,8 @@ const Profile: React.FC = () => {
       },
     },
   );
+
+  console.log("data", data);
 
   useEffect(() => {
     const handleGetAddLike = (data: { userId: number; movieId: number }) => {
@@ -104,21 +100,23 @@ const Profile: React.FC = () => {
       <ProfileAchievements />
     </YStack>
   );
-
+  logger.info("data", data);
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <YStack f={1} bg="$backgroundDefault">
         <FlatList
-          data={["data"]} // داده‌های اصلی شما اینجا قرار می‌گیرند
-          keyExtractor={(item, index) => index.toString()}
+          data={data}
+          keyExtractor={(item) => item.inviteInserted.id.toString()}
           ListHeaderComponent={renderHeader}
-          renderItem={
-            ({ item }) => null // <VideosProfileItem match={item} videoLikes={videoLikes} />
-          }
-          onEndReached={() => {
-            if (hasMore && !isLoading) fetchNextPage();
-          }}
-          onEndReachedThreshold={0.5}
+          renderItem={({ item }) => (
+            <VideosProfileItem
+              activeVideoId={activeVideoId}
+              onPlay={(id: string | null) => setActiveVideoId(id)}
+              video={item}
+              videoLikes={videoLikes}
+            />
+          )}
+          onEndReachedThreshold={0.3}
           ListFooterComponent={() =>
             isLoading ? (
               <YStack p="$4" jc="center" ai="center">
@@ -127,39 +125,23 @@ const Profile: React.FC = () => {
             ) : null
           }
           refreshControl={
-            <RefreshControl refreshing={false} onRefresh={refresh} />
+            <RefreshControl
+              refreshing={isLoading && data.length === 0}
+              onRefresh={refresh}
+            />
           }
+          onEndReached={async () => {
+            if (hasMore && !isLoading && !isFetchingMore) {
+              setIsFetchingMore(true);
+              await fetchNextPage();
+              setIsFetchingMore(false);
+            }
+          }}
+          removeClippedSubviews
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={5}
         />
-
-        {/* جایگزین Modal نیتیو-بیس با Modal ری‌اکت نیتیو و استایل‌های Tamagui */}
-        <Modal
-          visible={isOpen}
-          onRequestClose={onClose}
-          animationType="slide"
-          presentationStyle="pageSheet"
-        >
-          <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-            <YStack f={1} bg="$backgroundDefault">
-              <XStack
-                jc="space-between"
-                ai="center"
-                p="$4"
-                borderBottomWidth={1}
-                borderColor="$divider"
-              >
-                <Text fontSize="$5" fontWeight="bold" color="$textPrimary">
-                  Edit Profile
-                </Text>
-                <Pressable onPress={onClose} hitSlop={10}>
-                  <MaterialIcons name="close" size={24} color="black" />
-                </Pressable>
-              </XStack>
-              {/* <View f={1} p="$4">
-                <EditProfile setShowEditProfile={onClose} />
-              </View> */}
-            </YStack>
-          </SafeAreaView>
-        </Modal>
       </YStack>
     </SafeAreaView>
   );

@@ -1,9 +1,12 @@
+import Logo from "@/src/assets/images/logocircle.png";
 import BaseButton from "@/src/components/BaseButtom";
 import BaseInput from "@/src/components/BaseInput";
 import { login } from "@/src/services/authService";
 import { saveToken } from "@/src/services/tokenServices";
 import { RsetUserId } from "@/src/slices/main";
 import { useAppDispatch } from "@/src/store/reduxHookType";
+import { validateFormLogin } from "@/src/utils/errorValidation";
+import { FormErrors, FormValues } from "@/src/utils/GlobalType";
 import { Check, Eye, EyeOff } from "@tamagui/lucide-icons";
 import { Link, useRouter } from "expo-router";
 import { jwtDecode } from "jwt-decode";
@@ -11,37 +14,16 @@ import { useState } from "react";
 import { Alert } from "react-native";
 import { Checkbox, Image, Text, View, XStack, YStack } from "tamagui";
 
-type FormState = {
-  username: string;
-  password: string;
-};
-
-type FormErrors = {
-  general: string;
-  username: string;
-  password: string;
-};
-
-export default function LoginScreen() {
+const LoginScreen: React.FC<any> = () => {
   const router = useRouter();
-
-  const [formState, setFormState] = useState<FormState>({
-    username: "",
-    password: "",
-  });
-
-  const [errors, setErrors] = useState<FormErrors>({
-    general: "",
-    username: "",
-    password: "",
-  });
-
+  const [formState, setFormState] = useState<any>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
-
-  const handleInputChange = (name: keyof FormState, value: string) => {
-    setFormState((prev) => ({
+  const dispatch = useAppDispatch();
+  const handleInputChange = (name: keyof FormValues, value: string) => {
+    setFormState((prev: any) => ({
       ...prev,
       [name]: value,
     }));
@@ -53,33 +35,9 @@ export default function LoginScreen() {
     }));
   };
 
-  const validateForm = () => {
-    const newErrors: FormErrors = {
-      general: "",
-      username: "",
-      password: "",
-    };
-
-    if (!formState.username.trim()) {
-      newErrors.username = "Username is required";
-    }
-
-    if (!formState.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (formState.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    setErrors(newErrors);
-
-    return !newErrors.username && !newErrors.password;
-  };
-
-  const dispatch = useAppDispatch();
-
   const handleSubmit = async () => {
     if (loading || loginAttempts >= 3) return;
-    const isValid = validateForm();
+    const isValid = validateFormLogin(formState, setErrors);
     if (!isValid) return;
 
     try {
@@ -105,21 +63,13 @@ export default function LoginScreen() {
         ...prev,
         general: "Something went wrong. Please try again.",
       }));
-      Alert.alert("Error", "Something went wrong");
       setLoading(false);
     }
   };
 
   return (
-    <YStack
-      flex={1}
-      alignItems="center"
-      justifyContent="center"
-      backgroundColor="$backgroundDefault"
-      px="$4"
-    >
+    <YStack flex={1} alignItems="center" justifyContent="center" px="$4">
       <YStack
-        backgroundColor="$backgroundPaper"
         borderRadius="$4"
         p="$6"
         width="100%"
@@ -133,7 +83,7 @@ export default function LoginScreen() {
           <Link href="/" asChild>
             <View cursor="pointer">
               <Image
-                source={{ uri: "https://via.placeholder.com/100" }}
+                src={Logo}
                 width={100}
                 height={100}
                 borderRadius={50}
@@ -153,19 +103,16 @@ export default function LoginScreen() {
 
         <YStack gap="$4">
           <YStack gap="$2">
-            <Text fontSize="$3" fontWeight="600" color="$textPrimary">
-              Username
-            </Text>
-
             <BaseInput
+              label="Username"
               value={formState.username}
               onChangeText={(text) => handleInputChange("username", text)}
               placeholder="Enter your username"
               colorType="primary"
               hasError={!!errors.username}
               variant="outline"
+              errorMessage={errors.username}
             />
-
             {!!errors.username && (
               <Text color="$errorMain" fontSize="$3">
                 {errors.username}
@@ -174,43 +121,28 @@ export default function LoginScreen() {
           </YStack>
 
           <YStack gap="$2">
-            <Text fontSize="$3" fontWeight="600" color="$textPrimary">
-              Password
-            </Text>
             <View position="relative">
               <BaseInput
+                label="Password"
                 secureTextEntry={!showPassword}
                 value={formState.password}
                 onChangeText={(text) => handleInputChange("password", text)}
                 placeholder="Enter your password"
-                paddingRight="$10"
-                colorType="primary"
-                hasError={!!errors.password}
-                variant="outline"
+                errorMessage={errors.password}
+                rightIcon={
+                  <View
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    cursor="pointer"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="gray" />
+                    ) : (
+                      <Eye size={20} color="gray" />
+                    )}
+                  </View>
+                }
               />
-
-              <View
-                position="absolute"
-                right="$3"
-                top={0}
-                bottom={0}
-                justifyContent="center"
-                zIndex={10}
-                onPress={() => setShowPassword((prev) => !prev)}
-                cursor="pointer"
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color="gray" />
-                ) : (
-                  <Eye size={20} color="gray" />
-                )}
-              </View>
             </View>
-            {!!errors.password && (
-              <Text color="$errorMain" fontSize="$3">
-                {errors.password}
-              </Text>
-            )}
           </YStack>
 
           {!!errors.general && (
@@ -238,7 +170,10 @@ export default function LoginScreen() {
             colorType="primary"
             loading={loading}
             // disabled={isDisabled}
-            onPress={handleSubmit}
+            // onPress={handleSubmit}
+            onPress={() => {
+              // return message.show("Hellllllllllo world");
+            }}
             width="100%"
           >
             {loading ? "Signing in..." : "Sign in"}
@@ -246,7 +181,7 @@ export default function LoginScreen() {
 
           <BaseButton
             appearance="ghost"
-            colorType="secondary"
+            colorType="primary"
             onPress={() => Alert.alert("Forgot Password", "Coming soon")}
           >
             Forgot password?
@@ -272,4 +207,5 @@ export default function LoginScreen() {
       </YStack>
     </YStack>
   );
-}
+};
+export default LoginScreen;

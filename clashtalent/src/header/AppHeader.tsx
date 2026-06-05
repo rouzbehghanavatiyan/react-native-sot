@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import React, { useEffect, useMemo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { H1 } from "tamagui";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
 
 const AppHeader = () => {
@@ -81,7 +82,15 @@ const AppHeader = () => {
           </TouchableOpacity>
         )} */}
 
-        <Text style={styles.logo}>Clash Talent</Text>
+        <H1
+          style={styles.logo}
+          fontFamily="$logo"
+          mt="$4"
+          color="$textPrimary"
+          size="$6"
+        >
+          Clash Talent
+        </H1>
       </View>
 
       {routes.isProfile ? (
@@ -120,7 +129,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontFamily: "logoFont",
-    fontSize: 28,
+    fontSize: 20,
     color: "#10153D",
     fontWeight: "bold",
   },

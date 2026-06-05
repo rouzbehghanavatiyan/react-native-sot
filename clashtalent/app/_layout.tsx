@@ -1,5 +1,4 @@
 import { store } from "@/src/store/store";
-import { PortalProvider } from "@gorhom/portal";
 import { TamaguiProvider, View } from "@tamagui/core";
 import { useFonts } from "expo-font";
 import { Slot } from "expo-router";
@@ -7,6 +6,7 @@ import { ActivityIndicator } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
+import { PortalProvider } from "tamagui";
 import tamaguiConfig from "../tamagui.config";
 import { AppInitializer } from "./AppInitializer";
 
@@ -17,13 +17,12 @@ export default function RootLayout() {
     PlusJakartaSans: require("../src/assets/fonts/PlusJakartaSans-Regular.ttf"),
   });
 
-  console.log("Layouttttttttttttttttt");
-
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-        <SafeAreaProvider>
-          <PortalProvider>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+      <PortalProvider shouldAddRootHost>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          {/* <AppToastProvider> */}
+          <SafeAreaProvider>
             <Provider store={store}>
               <AppInitializer>
                 {fontsLoaded ? (
@@ -35,9 +34,10 @@ export default function RootLayout() {
                 )}
               </AppInitializer>
             </Provider>
-          </PortalProvider>
-        </SafeAreaProvider>
-      </TamaguiProvider>
-    </GestureHandlerRootView>
+          </SafeAreaProvider>
+          {/* </AppToastProvider> */}
+        </GestureHandlerRootView>
+      </PortalProvider>
+    </TamaguiProvider>
   );
 }
