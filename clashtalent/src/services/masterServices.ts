@@ -134,6 +134,10 @@ export const commentList = async (movieId: number) => {
   return await api.get(`/commentList?movieId=${movieId}`);
 };
 
+export const topScoreList = async () => {
+  return await api.get(`/topScoreList`);
+};
+
 export const removeComment = async (commentId: number) => {
   // const url = `${baseURL}/removeComment?commentId=${commentId}`;
   // return await axios.delete(url);

@@ -21,9 +21,16 @@ const AppHeader = () => {
       isShowWatch: pathname === "/watch/show",
       isNotification: pathname === "/notification",
       isMessage: pathname === "/privateMessage",
+      isTopScore: pathname === "/topScore",
     }),
     [pathname],
   );
+  const titleMap: Record<string, string> = {
+    "/topScore": "Top score",
+    "/profile": "Profile",
+    "/notification": "Notifications",
+  };
+  const headerTitle = titleMap[pathname] || "Clash Talent";
 
   const handleReadConfirmation = (data: any) => {
     // if (currentUser?.id === data.receiver) {
@@ -85,11 +92,11 @@ const AppHeader = () => {
         <H1
           style={styles.logo}
           fontFamily="$logo"
-          mt="$4"
+          // mt="$4"  <-- این را حذف کن، چون متن را از بالا هل می‌دهد پایین
           color="$textPrimary"
           size="$6"
         >
-          Clash Talent
+          {headerTitle}
         </H1>
       </View>
 
@@ -132,6 +139,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#10153D",
     fontWeight: "bold",
+    display: "flex",
+    alignItems: "center",
   },
   iconContainer: {
     flexDirection: "row",

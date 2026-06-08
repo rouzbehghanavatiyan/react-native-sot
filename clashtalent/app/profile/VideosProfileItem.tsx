@@ -2,10 +2,11 @@ import VideoSection from "@/src/components/VideoSection";
 import React from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const ITEM_HEIGHT = SCREEN_HEIGHT * 0.7;
-const VIDEO_HEIGHT = ITEM_HEIGHT / 2;
+const VIDEO_WIDTH = 200;
+const VIDEO_HEIGHT = 500;
+const ITEM_HEIGHT = VIDEO_HEIGHT * 2;
 
 export default function VideosProfileItem({
   onPlayChange,
@@ -71,9 +72,10 @@ export default function VideosProfileItem({
             <VideoSection
               activeVideoId={activeVideoId}
               video={video}
+              width={VIDEO_WIDTH}
+              height={VIDEO_HEIGHT}
               attachment={section.attachment}
               positionVideo={section.position}
-              height={VIDEO_HEIGHT}
               score={section.score}
               result={section.result}
               countLiked={section.likeCount}
@@ -103,7 +105,8 @@ const styles = StyleSheet.create({
   },
   half: {
     height: VIDEO_HEIGHT,
-    borderBottomWidth: 1,
-    borderBottomColor: "#111",
+    // برای جلوگیری از بهم خوردن سایز به خاطر border، بهتر است از مرز داخلی یا عدم استفاده از آن در حالت مربع استفاده کنید
+    // borderBottomWidth: 1,
+    // borderBottomColor: "#111",
   },
 });

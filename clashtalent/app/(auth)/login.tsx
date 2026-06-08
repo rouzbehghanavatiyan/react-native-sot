@@ -169,11 +169,7 @@ const LoginScreen: React.FC<any> = () => {
             appearance="solid"
             colorType="primary"
             loading={loading}
-            // disabled={isDisabled}
-            // onPress={handleSubmit}
-            onPress={() => {
-              // return message.show("Hellllllllllo world");
-            }}
+            onPress={handleSubmit}
             width="100%"
           >
             {loading ? "Signing in..." : "Sign in"}

@@ -5,7 +5,6 @@ import { usePagination } from "@/src/hook/usePagination";
 import { userAttachmentList } from "@/src/services/masterServices";
 import { useAppSelector } from "@/src/store/reduxHookType";
 import { getImageUrl } from "@/src/utils/fileHelper";
-import { logger } from "@/src/utils/logger";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { FlatList, RefreshControl, SafeAreaView } from "react-native";
@@ -100,7 +99,6 @@ const Profile: React.FC = () => {
       <ProfileAchievements />
     </YStack>
   );
-  logger.info("data", data);
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <YStack f={1} bg="$backgroundDefault">

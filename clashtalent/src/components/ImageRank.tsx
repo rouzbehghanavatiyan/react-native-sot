@@ -301,8 +301,8 @@ const styles = StyleSheet.create({
   },
   rankNumberContainer: {
     position: "absolute",
-    top: "50%",
-    left: "50%",
+    top: "60%", // قبلاً 50% بود
+    left: "52%",
     transform: [{ translateX: -12 }, { translateY: -12 }],
     alignItems: "center",
     justifyContent: "center",
