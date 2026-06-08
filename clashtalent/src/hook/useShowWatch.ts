@@ -1,12 +1,10 @@
 import { AnyAction } from "@reduxjs/toolkit";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
+import { useAppDispatch } from "../store/reduxHookType";
 
 interface UseShowWatchProps {
   inviteId?: string;
-
   data: any[];
-  appendData: any;
   pagination: {
     skip: number;
     take: number;
@@ -19,9 +17,9 @@ interface UseShowWatchProps {
   customCleanup?: () => void;
 }
 
-export const useShowWatch: any = ({
+export const useShowWatch = ({
   inviteId,
-  data,
+  data = [],
   pagination,
   customFetchNextPage,
   paginationAction,
@@ -32,8 +30,6 @@ export const useShowWatch: any = ({
   const dispatch = useAppDispatch();
 
   const [isLoading, setIsLoading] = useState(false);
-  const currentData = useAppSelector((state) => state.main.showWatchMatch.data);
-  const currentDataLength = currentData.length;
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(
     null,
@@ -55,7 +51,7 @@ export const useShowWatch: any = ({
   }, [pagination]);
 
   useEffect(() => {
-    dataRef.current = data;
+    dataRef.current = data || [];
   }, [data]);
 
   const defaultFetchNextPage = useCallback(async (params: any) => {
@@ -76,7 +72,7 @@ export const useShowWatch: any = ({
 
   const fetchNextPage = useCallback(async () => {
     if (isLoadingRef.current || !paginationRef.current.hasMore || !inviteId) {
-      return;
+      return [];
     }
 
     setIsLoading(true);
@@ -84,9 +80,9 @@ export const useShowWatch: any = ({
     try {
       const fetcher = customFetchNextPage ?? defaultFetchNextPage;
 
+      const currentDataLength = dataRef.current.length;
       const isFirstFetch = currentDataLength === 0;
       const dynamicTake = isFirstFetch ? 6 : 3;
-
       const exactSkip = currentDataLength;
 
       const newData = await fetcher({
@@ -116,11 +112,11 @@ export const useShowWatch: any = ({
     }
   }, [
     inviteId,
-    currentDataLength,
     dispatch,
     appendAction,
     customFetchNextPage,
     defaultFetchNextPage,
+    paginationAction,
   ]);
 
   const handleVideoPlay = useCallback((videoId: string) => {
@@ -153,10 +149,10 @@ export const useShowWatch: any = ({
     ],
     [],
   );
+
   const handleSlideChange = useCallback(
     (index: number) => {
       setActiveSlideIndex(index);
-
       setOpenDropdowns({});
 
       const currentVideoId =
@@ -195,11 +191,11 @@ export const useShowWatch: any = ({
     return () => {
       if (customCleanup) {
         customCleanup();
-      } else {
+      } else if (resetAction) {
         dispatch(resetAction());
       }
     };
-  }, [dispatch, customCleanup]);
+  }, [dispatch, customCleanup, resetAction]);
 
   return {
     data,

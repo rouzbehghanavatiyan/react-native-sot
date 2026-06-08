@@ -4,7 +4,20 @@ import VideoSection from "./VideoSection";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-export default function ShowWatchSlide({ video, isActive }: any) {
+export default function ShowWatchSlide({
+  video,
+  currentlyPlayingId,
+  openDropdowns,
+  onVideoPlay,
+  toggleDropdown,
+  dropdownItems,
+  setOpenDropdowns,
+  endTime,
+  showScore,
+  showResult,
+  showLiked,
+  showCountLiked,
+}: any) {
   const [playingPosition, setPlayingPosition] = React.useState<number>(0);
   const handleVideoPlay = (position: number) => {
     setPlayingPosition((prev) => (prev === position ? -1 : position));
@@ -49,34 +62,38 @@ export default function ShowWatchSlide({ video, isActive }: any) {
   ];
 
   return (
-    <View style={styles.container}>
+    <>
       {videoSections.map((section, sectionIndex) => (
         <View key={sectionIndex} style={styles.half}>
           <VideoSection
+            externalIsLiked={showLiked ? true : false}
+            score={showScore ? section?.score : null}
+            result={showResult ? section?.result : null}
+            showLiked={showLiked ? true : false}
+            countLiked={showCountLiked ? section?.likeCount : null}
+            endTime={endTime}
             video={video}
-            attachment={section.attachment}
+            isPlaying={currentlyPlayingId === section.attachment?.attachmentId}
+            onVideoPlay={() => onVideoPlay(section.attachment?.attachmentId)}
+            toggleDropdown={() => toggleDropdown(section.position)}
+            dropdownItems={() =>
+              dropdownItems(video, section.position, section.user)
+            }
+            setOpenDropdowns={setOpenDropdowns}
+            openDropdowns={openDropdowns}
             positionVideo={section.position}
-            score={section.score}
-            result={section.result}
-            countLiked={section.likeCount}
             isLiked={section.isLiked}
-            showLiked={true}
-            endTime={true}
-            isPlaying={isActive}
-            onVideoPlay={() => handleVideoPlay(section.position)}
           />
         </View>
       ))}
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
   half: {
+    height: 1 / 2,
+    position: "relative",
     flex: 1,
     borderBottomWidth: 1,
     borderBottomColor: "#111",

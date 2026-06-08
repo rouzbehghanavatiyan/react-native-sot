@@ -37,8 +37,22 @@ const initialState: any = {
   lastMatch: [],
   unreadMessagesCount: 0,
   watchVideo: { ...initialDataState },
-  homeMatch: { ...initialDataState },
-  showWatchMatch: { ...initialDataState },
+  homeMatch: {
+    pagination: {
+      take: 6,
+      skip: 0,
+      hasMore: true,
+    },
+    data: [],
+  },
+  showWatchMatch: {
+    pagination: {
+      take: 6,
+      skip: 0,
+      hasMore: true,
+    },
+    data: [],
+  },
   allFollowerList: [],
   category: [],
   userLogin: {},
@@ -100,14 +114,36 @@ const mainSlice = createSlice({
     setPaginationShowWatch: (state, action: PayloadAction<Pagination>) => {
       state.showWatchMatch.pagination = action.payload;
     },
+    setPaginationHomeMatch: (
+      state,
+      action: PayloadAction<{ take: number; skip: number; hasMore: boolean }>,
+    ) => {
+      state.homeMatch.pagination = action.payload;
+    },
     setShowWatchData: (state, action: PayloadAction<any[]>) => {
       state.showWatchMatch.data = action.payload;
+    },
+    resetHomeMatch: (state) => {
+      state.homeMatch.data = [];
+      state.homeMatch.pagination = {
+        skip: 0,
+        take: 6,
+        hasMore: true,
+      };
+    },
+    appendHomeMatch: (state, action) => {
+      state.homeMatch.data = [...state.homeMatch.data, ...action.payload];
     },
     appendShowWatch: (state, action) => {
       state.showWatchMatch.data = [
         ...state.showWatchMatch.data,
         ...action.payload,
       ];
+    },
+    RsetHomeMatch: (state, action: PayloadAction<any[]>) => {
+      if (Array.isArray(action.payload)) {
+        state.homeMatch.data = [...state.homeMatch.data, ...action.payload];
+      }
     },
     setUnreadMessagesCount: (state, action: PayloadAction<number>) => {
       state.unreadMessagesCount = action.payload;
@@ -162,7 +198,8 @@ export const {
   setUnreadMessagesCount,
   setLastMatch,
   setShowTimerButton,
-
+  RsetHomeMatch,
+  setPaginationHomeMatch,
   RsetUserId,
   resetWatchState,
   resetHomeState,
@@ -176,6 +213,8 @@ export const {
   RsetSocketConfig,
   RsetGiveUserOnlines,
   RsetShowWatch,
+  appendHomeMatch,
+  resetHomeMatch,
 } = mainSlice.actions;
 
 export default mainSlice.reducer;

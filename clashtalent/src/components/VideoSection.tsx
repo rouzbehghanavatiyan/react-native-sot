@@ -1,31 +1,28 @@
 import { VideoView, useVideoPlayer } from "expo-video";
 import React, { useEffect } from "react";
-import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Dimensions, StyleSheet, View } from "react-native";
 import { useAppSelector } from "../store/reduxHookType";
 import { getImageUrl } from "../utils/fileHelper";
-import OptionBottom from "./OptionBottom";
 import OptionTop from "./OptionTop";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function VideoSection({
   score,
-  result,
-  countLiked,
-  isPlaying,
+  isLiked: externalIsLiked,
+  isFollowed: externalIsFollowed,
+  endTime,
   onVideoPlay,
   video,
-  positionVideo,
-  height,
-  width,
-  openDropdowns,
+  showLiked = false,
   setOpenDropdowns,
+  result,
   toggleDropdown,
   dropdownItems,
-  endTime,
-  showLiked,
-  externalIsLiked,
-  handleToggleComments,
+  openDropdowns,
+  isPlaying,
+  positionVideo,
+  countLiked,
 }: any) {
   const main = useAppSelector((state) => state.main);
   const userIdLogin = main?.userLogin?.user?.id;
@@ -52,11 +49,11 @@ export default function VideoSection({
   }, [player, isPlaying]);
 
   if (!videoUrl) {
-    return <View style={[styles.placeholder, { height }]} />;
+    return <View style={styles.placeholder} />;
   }
 
   return (
-    <View style={[styles.container, { height }]}>
+    <View style={styles.container}>
       <OptionTop
         main={main}
         video={video}
@@ -69,11 +66,7 @@ export default function VideoSection({
         dropdownItems={dropdownItems}
       />
 
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={onVideoPlay}
-        style={[styles.videoWrapper, { height }]}
-      >
+      <View style={styles.videoContainer}>
         <View style={styles.videoCenter}>
           <VideoView
             player={player}
@@ -83,53 +76,59 @@ export default function VideoSection({
             nativeControls={false}
             contentFit="contain"
           />
-        </View>
 
-        <OptionBottom
-          socket={socket}
-          userIdLogin={userIdLogin}
-          handleToggleComments={handleToggleComments}
-          video={video}
-          endTime={endTime}
-          result={result}
-          showLiked={showLiked}
-          externalIsLiked={externalIsLiked}
-          positionVideo={positionVideo}
-          countLiked={
-            positionVideo === 0 ? video?.likeInserted : video?.likeMatched
-          }
-        />
-      </TouchableOpacity>
+          {/* <OptionBottom
+            socket={socket}
+            userIdLogin={userIdLogin}
+            video={video}
+            endTime={endTime}
+            result={result}
+            showLiked={showLiked}
+            externalIsLiked={externalIsLiked}
+            positionVideo={positionVideo}
+            countLiked={
+              positionVideo === 0 ? video?.likeInserted : video?.likeMatched
+            }
+          /> */}
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH,
-    backgroundColor: "#000",
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  videoWrapper: {
+    flex: 1,
     width: "100%",
-    flex: 1,
+    position: "relative",
+    flexDirection: "column",
   },
 
-  videoCenter: {
+  videoContainer: {
     flex: 1,
+    position: "relative",
     justifyContent: "center",
     alignItems: "center",
   },
 
-  video: {
+  videoCenter: {
+    position: "relative",
     width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000",
+    overflow: "hidden",
+  },
+
+  video: {
+    width: SCREEN_WIDTH,
     height: "100%",
   },
 
   placeholder: {
     width: SCREEN_WIDTH,
+    height: "100%",
     backgroundColor: "#111",
   },
 });
