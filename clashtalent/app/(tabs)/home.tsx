@@ -25,7 +25,22 @@ const HomeScreen: React.FC = () => {
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const usableHeight = height - headerHeight - tabBarHeight;
+  const [showComments, setShowComments] = useState(false);
+  const [commentInfo, setCommentInfo] = useState<any>(null);
+  const [commentPosition, setCommentPosition] = useState(0);
+  const [selectedVideo, setSelectedVideo] = useState<any>(null); // ویدیویی که کامنتش باز شده
+  console.log("Home render showComments:", showComments);
+  console.log("selectedVideo:", selectedVideo);
+  console.log("commentInfo:", commentInfo);
+  console.log("commentPosition:", commentPosition);
+  const handleOpenComments = useCallback((video: any, position: number) => {
+    console.log("handleOpenComments called", { video, position });
 
+    setSelectedVideo(video);
+    setCommentInfo(video);
+    setCommentPosition(position ?? 0);
+    setShowComments(true);
+  }, []);
   const customFetchNextPage = useCallback(
     async (params: {
       skip: number;
@@ -83,16 +98,6 @@ const HomeScreen: React.FC = () => {
     [handleSlideChange],
   );
 
-  const [showComments, setShowComments] = useState(false);
-  const [commentInfo, setCommentInfo] = useState<any>(null);
-  const [commentPosition, setCommentPosition] = useState(0);
-
-  const handleOpenComments = useCallback((video: any, position: number) => {
-    setCommentInfo(video);
-    setCommentPosition(position);
-    setShowComments(true);
-  }, []);
-
   logger.info("home data", data);
 
   const showInitialLoader =
@@ -143,8 +148,9 @@ const HomeScreen: React.FC = () => {
           )}
         />
       )}
-      {showComments && commentInfo && (
+      {showComments && (
         <Comments
+          video={selectedVideo}
           positionVideo={commentPosition}
           commentUserInfo={commentInfo}
           showComments={showComments}

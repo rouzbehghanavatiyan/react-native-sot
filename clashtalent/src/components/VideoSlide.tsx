@@ -12,6 +12,7 @@ export default function ShowWatchSlide({
   toggleDropdown,
   dropdownItems,
   setOpenDropdowns,
+  handleToggleComments,
   endTime,
   showScore,
   showResult,
@@ -79,6 +80,7 @@ export default function ShowWatchSlide({
             dropdownItems={() =>
               dropdownItems(video, section.position, section.user)
             }
+            handleToggleComments={handleToggleComments}
             setOpenDropdowns={setOpenDropdowns}
             openDropdowns={openDropdowns}
             positionVideo={section.position}

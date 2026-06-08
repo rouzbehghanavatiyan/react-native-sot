@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import { useAppSelector } from "../store/reduxHookType";
 import { getImageUrl } from "../utils/fileHelper";
+import OptionBottom from "./OptionBottom";
 import OptionTop from "./OptionTop";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -23,6 +24,7 @@ export default function VideoSection({
   isPlaying,
   positionVideo,
   countLiked,
+  handleToggleComments,
 }: any) {
   const main = useAppSelector((state) => state.main);
   const userIdLogin = main?.userLogin?.user?.id;
@@ -77,7 +79,7 @@ export default function VideoSection({
             contentFit="contain"
           />
 
-          {/* <OptionBottom
+          <OptionBottom
             socket={socket}
             userIdLogin={userIdLogin}
             video={video}
@@ -89,7 +91,10 @@ export default function VideoSection({
             countLiked={
               positionVideo === 0 ? video?.likeInserted : video?.likeMatched
             }
-          /> */}
+            handleToggleComments={() =>
+              handleToggleComments(video, positionVideo)
+            }
+          />
         </View>
       </View>
     </View>

@@ -8,6 +8,7 @@ import {
 import { useAppSelector } from "@/src/store/reduxHookType";
 import asyncWrapper from "@/src/utils/asyncWrapper";
 import { getImageUrl } from "@/src/utils/fileHelper";
+import { logger } from "@/src/utils/logger";
 import { MaterialIcons } from "@expo/vector-icons";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -29,6 +30,7 @@ const Comments: React.FC<any> = ({
   setShowComments,
   commentUserInfo,
   showComments,
+  video,
 }) => {
   const main = useAppSelector((state: any) => state?.main);
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -52,11 +54,8 @@ const Comments: React.FC<any> = ({
       setAnswerInfo(null);
       setTitle("");
       Keyboard.dismiss();
-      bottomSheetRef.current?.close();
       return;
     }
-
-    bottomSheetRef.current?.snapToIndex(0);
     handleGetAllList();
   }, [showComments]);
 
@@ -194,12 +193,13 @@ const Comments: React.FC<any> = ({
         ))}
     </YStack>
   );
-
+  logger.info("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
   return (
     <Portal>
       <BottomSheet
         ref={bottomSheetRef}
-        index={showComments ? 0 : -1}
+        // index={showComments ? 0 : -1}
+        index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
         onClose={() => setShowComments(false)}
