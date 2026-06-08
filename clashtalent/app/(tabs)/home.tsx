@@ -17,18 +17,13 @@ import Comments from "../comments";
 
 const HomeScreen: React.FC = () => {
   const hasFetchedOnce = useRef(false);
-
   const main = useAppSelector((state) => state.main);
   const { pagination, data: reduxData } = main.homeMatch;
-
   const userIdLogin = main?.userLogin?.user?.id;
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const { width, height } = useWindowDimensions();
-
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
-
   const usableHeight = height - headerHeight - tabBarHeight;
 
   const customFetchNextPage = useCallback(
@@ -48,9 +43,9 @@ const HomeScreen: React.FC = () => {
 
         hasFetchedOnce.current = true;
 
-        console.info("home match response:", res);
+        console.log("API DATA ARRAY", res?.data?.data);
 
-        return res?.data || [];
+        return res?.data?.data || [];
       } catch (error) {
         hasFetchedOnce.current = true;
         console.error("Error fetching data:", error);
@@ -100,12 +95,17 @@ const HomeScreen: React.FC = () => {
 
   logger.info("home data", data);
 
+  const showInitialLoader =
+    !hasFetchedOnce.current && (!data || data.length === 0);
   const showEmptyState =
     hasFetchedOnce.current && !isLoading && (!data || data.length === 0);
-
   return (
     <View style={styles.container}>
-      {showEmptyState ? (
+      {showInitialLoader ? (
+        <View style={styles.loaderWrapper}>
+          <Text>Loading...</Text>
+        </View>
+      ) : showEmptyState ? (
         <View style={styles.emptyWrapper}>
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No Content Available</Text>
@@ -143,7 +143,6 @@ const HomeScreen: React.FC = () => {
           )}
         />
       )}
-
       {showComments && commentInfo && (
         <Comments
           positionVideo={commentPosition}
@@ -201,6 +200,11 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: "#9CA3AF",
     textAlign: "center",
+  },
+  loaderWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 
