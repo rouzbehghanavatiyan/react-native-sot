@@ -168,8 +168,8 @@ const OptionBottom: React.FC<OptionBottomProps> = ({
           gap={2}
           justifyContent="space-between"
           alignItems="center"
-          px={2}
-          pb={2}
+          px={10}
+          pb={8}
         >
           <View flex={1} alignItems="flex-start">
             <TouchableOpacity onPress={handleToggleComments}>
@@ -179,13 +179,18 @@ const OptionBottom: React.FC<OptionBottomProps> = ({
           {!endTime && resultStyle && (
             <View flex={1} alignItems="center">
               <View
-                borderWidth={1}
-                borderColor={resultStyle.borderColor}
+                // borderWidth={1}
+                // borderColor={resultStyle.borderColor}
                 px={2}
                 py={1}
                 borderRadius="$3"
               >
-                <Text color={resultStyle.color} fontSize="$4" fontWeight="bold">
+                <Text
+                  color={resultStyle.color}
+                  fontSize="$4"
+                  padding="$1"
+                  fontWeight="bold"
+                >
                   {resultStyle.text}
                 </Text>
               </View>
@@ -196,18 +201,18 @@ const OptionBottom: React.FC<OptionBottomProps> = ({
               {showLiked && movieId && (
                 <TouchableOpacity onPress={handleLikeClick}>
                   {isLiked ? (
-                    <Icon name="thumbs-up-outline" color="white" />
+                    <Icon name="thumb-up" color="#3b82f6" />
                   ) : (
-                    <Icon name="thumbs-up-outline" color="white" />
+                    <Icon name="thumb-up-off-alt" color="white" />
                   )}
                 </TouchableOpacity>
               )}
               {!endTime && localLikeCount !== undefined && movieId && (
                 <XStack gap={1} alignItems="center">
-                  <Text pt={1} color="gray.400" fontSize="$5">
+                  <Text margin={2} pt={1} color="gray" fontSize="$5">
                     {localLikeCount}
                   </Text>
-                  <Icon name="thumbs-up-outline" color="gray.400" />
+                  <Icon name="thumb-up" color="gray" size={20} />
                 </XStack>
               )}
             </XStack>

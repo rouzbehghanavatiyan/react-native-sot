@@ -73,8 +73,13 @@ export const attachmentListByInviteId = async (postData: {
 
   return res.data;
 };
+
 export const addAttachment = async (postData: any) => {
-  return await api.post(`/addAttachment`, postData);
+  return await api.post(`/addAttachment`, postData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 export const removeFollower = async (postData: any) => {
@@ -118,8 +123,7 @@ export const addInvite = async (postData: any) => {
 };
 
 export const addMovie = async (data: any) => {
-  // const url = `${baseURL}/addMovie`;
-  // return await axios.post(url, data);
+  return await api.post(`/addMovie`, data);
 };
 
 export const registerUser = async (postData: any) => {

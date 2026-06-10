@@ -1,11 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Alert } from "react-native";
 import {
   addAttachment,
   addInvite,
   addMovie,
   removeInvite,
 } from "../services/masterServices";
+import { logger } from "../utils/logger";
+import { RsetShowTimerButtn } from "./main";
 
 interface VideoState {
   videoSrc: string | null;
@@ -76,82 +79,94 @@ export const uploadFullProcessThunk = createAsyncThunk(
     { userId, gearId, mode, allFormData, socket, movieMeta }: any,
     { rejectWithValue, dispatch },
   ) => {
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     try {
-      const localGearId = await AsyncStorage.getItem("gearId");
+      // 1. دریافت gearId از AsyncStorage (Async)
+      const storedGearId = await AsyncStorage.getItem("gearId");
+
       const postData = {
         userId,
         description: movieMeta?.desc ?? "",
         title: movieMeta?.title ?? "",
-        subSubCategoryId: gearId || localGearId || null,
+        subSubCategoryId: gearId || storedGearId || null,
         modeId: mode?.typeMode || null,
       };
 
       const movieRes = await addMovie(postData);
-      console.log(movieRes);
-      const movieDataRes = movieRes?.data?.data;
-
-      if (movieRes?.data?.status !== 0) {
+      const movieDataRes = movieRes?.data;
+      const movieId = movieRes?.data?.data?.id;
+      logger.info("Helllllllllllllllllllllllllllo addMovie", movieRes);
+      if (movieDataRes?.status !== 0) {
         throw new Error("Error in recording initial movie information");
       }
 
       let inviteData = null;
-      if (mode?.typeMode === 3) {
-        const formData = new FormData();
 
-        // تغییر: نحوه اپند کردن فایل در FormData ری‌اکت نیتیو
-        if (allFormData?.video) {
-          formData.append("formFile", {
-            uri: allFormData.video.uri,
-            name: allFormData.video.fileName || "video.mp4",
-            type: allFormData.video.mimeType || "video/mp4",
-          } as any);
-        }
+      const formData = new FormData();
+      logger.info(
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIts",
+      );
+      if (allFormData?.video) {
+        formData.append("formFile", {
+          uri: allFormData.video.uri,
+          name: allFormData.video.name || "video.mp4",
+          type: allFormData.video.type || "video/mp4",
+        } as any);
+      }
 
-        if (allFormData?.imageCover) {
-          formData.append("formFile", {
-            uri: allFormData?.imageCover?.uri,
-            name: allFormData?.imageCover?.fileName || "cover.jpg",
-            type: allFormData?.imageCover?.mimeType || "image/jpeg",
-          } as any);
-        }
+      if (allFormData?.imageCover) {
+        formData.append("formFile", {
+          uri: allFormData.imageCover.uri,
+          name: allFormData.imageCover.name || "cover.jpg",
+          type: allFormData.imageCover.type || "image/jpeg",
+        } as any);
+      }
 
-        formData.append("attachmentId", movieDataRes?.id);
-        formData.append("attachmentType", "mo");
-        formData.append("attachmentName", "movies");
+      formData.append("attachmentId", movieId);
+      formData.append("attachmentType", "mo");
+      formData.append("attachmentName", "movies");
+      logger.info("Nexttttttttttttttttttttttt", formData);
+      const attachRes = await addAttachment(formData);
+      logger.info(
+        "Endddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        attachRes,
+      );
 
-        const attachRes = await addAttachment(formData);
-        if (attachRes.data.status !== 0) {
-          throw new Error("Error in uploading attachments!");
-        }
+      if (attachRes.data.status !== 0) {
+        throw new Error("Error in recording initial movie information!");
+      }
 
-        const postInvite = {
-          parentId: null,
-          userId: userId || null,
-          movieId: movieDataRes?.id || null,
-          status: 0,
-        };
+      const postInvite = {
+        parentId: null,
+        userId: userId || null,
+        movieId: movieId || null,
+        status: 0,
+      };
 
-        const inviteRes = await addInvite(postInvite);
-        // dispatch(RsetIsLoading(false));
-        // dispatch(RsetShowTimerButtn(true));
+      const inviteRes = await addInvite(postInvite);
+      dispatch(RsetIsLoading(false));
+      dispatch(RsetShowTimerButtn(true));
 
-        inviteData = inviteRes?.data?.data;
-        if (inviteData?.userId !== 0 && socket) {
-          if (timeoutId) clearTimeout(timeoutId);
-          // dispatch(RsetShowTimerButtn(false));
-          socket.emit("add_invite_offline", inviteData);
-        } else {
-          timeoutId = setTimeout(() => {
-            // dispatch(
-            //   RsetMessageModal({
-            //     show: true,
-            //     title: "An unexpected error occurred. Please try again.",
-            //     icon: "danger",
-            //   })
-            // );
-          }, 60000); // 60 seconds
-        }
+      inviteData = inviteRes?.data?.data;
+
+      if (inviteData?.userId !== 0 && socket) {
+        if (timeoutId) clearTimeout(timeoutId);
+        dispatch(RsetShowTimerButtn(false));
+        socket.emit("add_invite_offline", inviteData);
+      } else {
+        // تایمر ۶۰ ثانیه‌ای
+        timeoutId = setTimeout(() => {
+          dispatch(RsetShowTimerButtn(false)); // همچنین تایمر را مخفی می‌کنیم
+          // dispatch(
+          //   RsetMessageModal({
+          //     show: true,
+          //     title: "Matching timed out. Please try again.",
+          //     icon: "danger",
+          //   }),
+          // );
+          Alert.alert("Matching timed out. Please try again.");
+        }, 60000);
       }
 
       return {
@@ -161,7 +176,8 @@ export const uploadFullProcessThunk = createAsyncThunk(
       };
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId);
-      // dispatch(RsetShowTimerButtn(false));
+      dispatch(RsetIsLoading(false)); // حتما لودینگ را در خطا هم بردارید
+      dispatch(RsetShowTimerButtn(false));
       return rejectWithValue(error.message || "Upload failed");
     }
   },

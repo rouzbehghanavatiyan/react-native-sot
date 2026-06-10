@@ -10,9 +10,9 @@ import { useAppSelector } from "@/src/store/reduxHookType";
 import { logger } from "@/src/utils/logger";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { FlashList } from "@shopify/flash-list";
 import React, { useCallback, useRef, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import Carousel from "react-native-reanimated-carousel";
 import Comments from "../comments";
 
 const HomeScreen: React.FC = () => {
@@ -24,15 +24,17 @@ const HomeScreen: React.FC = () => {
   const { width, height } = useWindowDimensions();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
-  const usableHeight = height - headerHeight - tabBarHeight;
+  const usableHeight: any = height - headerHeight - tabBarHeight;
   const [showComments, setShowComments] = useState(false);
   const [commentInfo, setCommentInfo] = useState<any>(null);
   const [commentPosition, setCommentPosition] = useState(0);
-  const [selectedVideo, setSelectedVideo] = useState<any>(null); // ویدیویی که کامنتش باز شده
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
+
   console.log("Home render showComments:", showComments);
   console.log("selectedVideo:", selectedVideo);
   console.log("commentInfo:", commentInfo);
   console.log("commentPosition:", commentPosition);
+
   const handleOpenComments = useCallback((video: any, position: number) => {
     console.log("handleOpenComments called", { video, position });
 
@@ -41,6 +43,7 @@ const HomeScreen: React.FC = () => {
     setCommentPosition(position ?? 0);
     setShowComments(true);
   }, []);
+
   const customFetchNextPage = useCallback(
     async (params: {
       skip: number;
@@ -90,13 +93,21 @@ const HomeScreen: React.FC = () => {
     appendAction: appendHomeMatch,
   });
 
-  const handleSnapToItem = useCallback(
-    (index: number) => {
-      setCurrentIndex(index);
-      handleSlideChange(index);
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: any }) => {
+      if (viewableItems && viewableItems.length > 0) {
+        const visibleItem = viewableItems[0];
+        if (visibleItem.index !== null) {
+          setCurrentIndex(visibleItem.index);
+          handleSlideChange(visibleItem.index);
+        }
+      }
     },
-    [handleSlideChange],
-  );
+  ).current;
 
   logger.info("home data", data);
 
@@ -104,6 +115,7 @@ const HomeScreen: React.FC = () => {
     !hasFetchedOnce.current && (!data || data.length === 0);
   const showEmptyState =
     hasFetchedOnce.current && !isLoading && (!data || data.length === 0);
+
   return (
     <View style={styles.container}>
       {showInitialLoader ? (
@@ -114,7 +126,6 @@ const HomeScreen: React.FC = () => {
         <View style={styles.emptyWrapper}>
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No Content Available</Text>
-
             <Text style={styles.emptyText}>
               Dear user, there are no followers available to view at the moment.
               Please visit the Watch page to connect with more users!
@@ -122,33 +133,46 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
       ) : (
-        <Carousel
-          vertical
-          width={width}
-          height={usableHeight}
-          data={data || []}
-          onSnapToItem={handleSnapToItem}
-          renderItem={({ item, index }) => (
-            <ShowWatchSlide
-              showLiked={false}
-              endTime={false}
-              showScore
-              showResult
-              showCountLiked
-              video={item}
-              index={index}
-              currentlyPlayingId={currentlyPlayingId}
-              openDropdowns={openDropdowns}
-              onVideoPlay={handleVideoPlay}
-              toggleDropdown={toggleDropdown}
-              dropdownItems={dropdownItems}
-              setOpenDropdowns={setOpenDropdowns}
-              handleToggleComments={handleOpenComments}
-            />
-          )}
-        />
+        // نکته مهم: FlashList باید والد با ابعاد مشخص داشته باشه
+        <View style={{ flex: 1, width, height: usableHeight }}>
+          <FlashList
+            data={data || []}
+            keyExtractor={(item, index) =>
+              item?.id?.toString() || index.toString()
+            }
+            pagingEnabled // برای اسنپ شدن مشابه کروسل
+            showsVerticalScrollIndicator={false}
+            // estimatedItemSize={usableHeight}
+            viewabilityConfig={viewabilityConfig}
+            onViewableItemsChanged={onViewableItemsChanged}
+            renderItem={({ item, index }) => (
+              // رپر با ارتفاع ثابت برای جلوگیری از بهم ریختگی اسکرول
+              <View style={{ width, height: usableHeight }}>
+                <ShowWatchSlide
+                  showLiked={false}
+                  endTime={false}
+                  showScore
+                  showResult
+                  showCountLiked
+                  video={item}
+                  index={index}
+                  currentlyPlayingId={currentlyPlayingId}
+                  openDropdowns={openDropdowns}
+                  onVideoPlay={handleVideoPlay}
+                  toggleDropdown={toggleDropdown}
+                  dropdownItems={dropdownItems}
+                  setOpenDropdowns={setOpenDropdowns}
+                  handleToggleComments={handleOpenComments}
+                />
+              </View>
+            )}
+          />
+        </View>
       )}
-      {showComments && (
+      <View
+        style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}
+        pointerEvents={showComments ? "auto" : "none"}
+      >
         <Comments
           video={selectedVideo}
           positionVideo={commentPosition}
@@ -156,7 +180,7 @@ const HomeScreen: React.FC = () => {
           showComments={showComments}
           setShowComments={setShowComments}
         />
-      )}
+      </View>
     </View>
   );
 };
@@ -166,14 +190,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
-
   emptyWrapper: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
   },
-
   emptyCard: {
     width: "100%",
     maxWidth: 420,
@@ -182,7 +204,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     backgroundColor: "#fff",
-
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 8,
@@ -192,7 +213,6 @@ const styles = StyleSheet.create({
     },
     elevation: 3,
   },
-
   emptyTitle: {
     fontSize: 20,
     fontWeight: "700",
@@ -200,7 +220,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: "center",
   },
-
   emptyText: {
     fontSize: 14,
     lineHeight: 21,

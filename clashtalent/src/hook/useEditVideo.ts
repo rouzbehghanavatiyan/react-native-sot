@@ -12,14 +12,6 @@ import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
 
-interface UseEditVideoProps {
-  showEditMovie: boolean;
-  setShowEditMovie: (show: boolean) => void;
-  allFormData: any;
-  mode: any;
-  routeVideoSrc: any;
-}
-
 export const useEditVideo = ({
   showEditMovie,
   routeVideoSrc,
@@ -53,7 +45,10 @@ export const useEditVideo = ({
       }
     }
   }, [showEditMovie, allFormData?.video, userIdLogin, dispatch]);
+
   const handleUploadVideo = useCallback(() => {
+    console.log("BSDFDSFDIHSDFOHSDIUFHSDUIFH");
+
     dispatch(
       uploadFullProcessThunk({
         userId: userIdLogin,
@@ -75,30 +70,24 @@ export const useEditVideo = ({
     }
   }, [dispatch, currentStep, movieData]);
 
-  const handleNextStep = useCallback(
-    (trimData?: {
-      startTime: number;
-      endTime: number;
-      originalSrc: string;
-      duration?: number;
-    }) => {
-      if (trimData) {
-        dispatch(
-          updateMovieData({
-            trimStart: trimData.startTime,
-            trimEnd: trimData.endTime,
-            ...(trimData.duration !== undefined && {
-              duration: trimData.duration,
-            }),
-          }),
-        );
-      }
-      dispatch(goToStep(2));
-    },
-    [dispatch],
-  );
+  const handleNextStep = (trimData?: {
+    startTime: number;
+    endTime: number;
+    originalSrc: string;
+    duration: number;
+  }) => {
+    if (trimData) {
+      dispatch(
+        updateMovieData({
+          trimStart: trimData.startTime,
+          trimEnd: trimData.endTime,
+          duration: trimData.duration,
+        }),
+      );
+    }
+    dispatch(goToStep(2));
+  };
 
-  // مدیریت پاسخ سوکت
   useEffect(() => {
     if (!socket || !showEditMovie) return;
 
@@ -132,7 +121,7 @@ export const useEditVideo = ({
     setMovieData: (data: any) => dispatch(setMovieData(data)),
     handleUploadVideo,
     handleBack,
-    handleNextStep,
     updateMovieMeta: (updates: any) => dispatch(setMovieMeta(updates)),
+    handleNextStep,
   };
 };

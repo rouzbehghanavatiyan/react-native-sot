@@ -8,7 +8,6 @@ import {
 import { useAppSelector } from "@/src/store/reduxHookType";
 import asyncWrapper from "@/src/utils/asyncWrapper";
 import { getImageUrl } from "@/src/utils/fileHelper";
-import { logger } from "@/src/utils/logger";
 import { MaterialIcons } from "@expo/vector-icons";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -22,7 +21,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Keyboard, Pressable, useWindowDimensions } from "react-native";
+import { Keyboard, Pressable } from "react-native";
 import { Spinner, Text, View, XStack, YStack } from "tamagui";
 
 const Comments: React.FC<any> = ({
@@ -35,8 +34,7 @@ const Comments: React.FC<any> = ({
   const main = useAppSelector((state: any) => state?.main);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const inputRef = useRef<any>(null);
-  const { height } = useWindowDimensions();
-  const snapPoints = useMemo(() => ["80%"], []);
+  const snapPoints = useMemo(() => ["50%", "90%"], []);
   const [title, setTitle] = useState<string>("");
   const [allComments, setAllComments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -49,17 +47,18 @@ const Comments: React.FC<any> = ({
       : commentUserInfo?.attachmentMatched?.attachmentId;
 
   useEffect(() => {
-    if (!showComments) {
+    if (showComments) {
+      handleGetAllList();
+    } else {
       setAllComments([]);
       setAnswerInfo(null);
       setTitle("");
       Keyboard.dismiss();
-      return;
     }
-    handleGetAllList();
-  }, [showComments]);
+  }, [showComments, getMovieId]);
 
   const handleGetAllList = async () => {
+    if (!getMovieId) return;
     setIsLoading(true);
     try {
       const res = await commentList(getMovieId);
@@ -131,14 +130,14 @@ const Comments: React.FC<any> = ({
         {...props}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        opacity={0.5}
-        pressBehavior="close"
+        pressBehavior="close" // با کلیک روی فضای خالی بسته شود
       />
     ),
     [],
   );
 
   const renderCommentItem = ({ item }: { item: any }) => (
+    // ... (بدون تغییر) ... دقیقا مانند کد خودتان
     <YStack bg="$backgroundDefault" py="$2">
       <XStack jc="space-between" ai="flex-start">
         <ImageRank
@@ -193,20 +192,17 @@ const Comments: React.FC<any> = ({
         ))}
     </YStack>
   );
-  logger.info("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+
   return (
     <Portal>
       <BottomSheet
-        ref={bottomSheetRef}
-        // index={showComments ? 0 : -1}
-        index={0}
+        index={showComments ? 0 : -1}
         snapPoints={snapPoints}
-        enablePanDownToClose
-        onClose={() => setShowComments(false)}
         backdropComponent={renderBackdrop}
-        enableDynamicSizing={false}
-        keyboardBehavior="interactive"
-        keyboardBlurBehavior="restore"
+        enablePanDownToClose={true}
+        onChange={(idx) => {
+          if (idx === -1) setShowComments(false); // وقتی با کشیدن بسته شد، استیت هم آپدیت شود
+        }}
       >
         <YStack f={1} bg="$backgroundPaper">
           <XStack
@@ -266,7 +262,6 @@ const Comments: React.FC<any> = ({
             )}
           </View>
 
-          {/* Input Area */}
           <YStack
             bg="$backgroundPaper"
             borderTopWidth={1}

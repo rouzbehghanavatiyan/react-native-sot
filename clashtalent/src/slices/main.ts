@@ -114,6 +114,9 @@ const mainSlice = createSlice({
     setPaginationShowWatch: (state, action: PayloadAction<Pagination>) => {
       state.showWatchMatch.pagination = action.payload;
     },
+    RsetShowTimerButtn: (state, action: PayloadAction<boolean>) => {
+      state.showTimerButtn = action.payload;
+    },
     setPaginationHomeMatch: (
       state,
       action: PayloadAction<{ take: number; skip: number; hasMore: boolean }>,
@@ -215,6 +218,7 @@ export const {
   RsetShowWatch,
   appendHomeMatch,
   resetHomeMatch,
+  RsetShowTimerButtn,
 } = mainSlice.actions;
 
 export default mainSlice.reducer;

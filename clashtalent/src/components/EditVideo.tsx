@@ -37,13 +37,15 @@ const EditVideoRoute = () => {
     updateMovieMeta,
     handleUploadVideo,
     handleBack,
-    handleNextStep,
+    // handleNextStep,
   } = useEditVideo({
     showEditMovie: true,
     setShowEditMovie: handleClose,
     allFormData,
     mode,
   });
+
+  console.log("EDIT VIF");
 
   const getModalTitle = () => {
     switch (mode?.typeMode) {
@@ -54,7 +56,9 @@ const EditVideoRoute = () => {
     }
   };
 
-  logger.info("src video ", videoSrc);
+  const handleNextStep = () => {
+    logger.info("src video ", videoSrc);
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -65,7 +69,7 @@ const EditVideoRoute = () => {
             movieData={movieData}
             onMovieDataChange={updateMovieMeta}
             onCancel={handleClose}
-            onNext={handleNextStep}
+            handleNextStep={handleNextStep}
           />
         );
 

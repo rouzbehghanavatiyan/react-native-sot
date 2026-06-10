@@ -301,14 +301,14 @@ const styles = StyleSheet.create({
   },
   rankNumberContainer: {
     position: "absolute",
-    top: "60%", // قبلاً 50% بود
-    left: "52%",
+    top: "70%",
+    left: "65%",
     transform: [{ translateX: -12 }, { translateY: -12 }],
     alignItems: "center",
     justifyContent: "center",
   },
   rankNumberText: {
-    fontSize: 12,
+    fontSize: 8,
     fontWeight: "bold",
     color: "#ffffff",
     textShadowColor: "rgba(0, 0, 0, 0.75)",

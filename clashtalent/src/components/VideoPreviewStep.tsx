@@ -1,9 +1,11 @@
 import MultiSlider from "@ptomasroos/react-native-multi-slider";
 import { AVPlaybackStatus, ResizeMode, Video } from "expo-av";
 import React, { useRef, useState } from "react";
-import { Dimensions, StyleSheet } from "react-native";
-import { Button, Text, View, XStack } from "tamagui";
-import BaseInput from "./BaseInput";
+import { Dimensions, Pressable, StyleSheet } from "react-native";
+import { Text, View, XStack } from "tamagui";
+import { goToStep } from "../slices/video";
+import { useAppDispatch } from "../store/reduxHookType";
+import BaseButton from "./BaseButtom";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -12,23 +14,23 @@ interface VideoPreviewStepProps {
   movieData: any;
   onMovieDataChange: (data: any) => void;
   onCancel: () => void;
-  onNext: (trimData?: {
-    startTime: number;
-    endTime: number;
-    originalSrc: string;
-    duration: number;
-  }) => void;
+  // handleNextStep: (trimData?: {
+  //   startTime: number;
+  //   endTime: number;
+  //   originalSrc: string;
+  //   duration: number;
+  // }) => void;
 }
 
-const VideoPreviewStep: React.FC<VideoPreviewStepProps> = ({
+const VideoPreviewStep: React.FC<any> = ({
   videoSrc,
   movieData,
   onMovieDataChange,
   onCancel,
-  onNext,
+  handleNextStep,
 }) => {
   const videoRef = useRef<Video>(null);
-
+  const [isPlaying, setIsPlaying] = useState(true);
   const [title, setTitle] = useState("");
   const [duration, setDuration] = useState(0);
   const [trimRange, setTrimRange] = useState([0, 0]);
@@ -37,10 +39,23 @@ const VideoPreviewStep: React.FC<VideoPreviewStepProps> = ({
     height: 300,
   });
 
+  const MAX_DURATION = 60;
+
+  const handleSliderChange = (values: number[]) => {
+    let start = values[0];
+    let end = values[1];
+
+    if (end - start > MAX_DURATION) {
+      end = start + MAX_DURATION;
+    }
+
+    setTrimRange([start, end]);
+    videoRef.current?.setPositionAsync(start * 1000);
+  };
+
   const handleVideoLoad = (status: any) => {
     if (!status.isLoaded) return;
 
-    // set duration
     if (status.durationMillis) {
       const secs = status.durationMillis / 1000;
       setDuration(secs);
@@ -68,36 +83,37 @@ const VideoPreviewStep: React.FC<VideoPreviewStepProps> = ({
       setVideoLayout({ width: finalWidth, height: finalHeight });
     }
   };
-
   const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
     if (!status.isLoaded || trimRange[1] === 0) return;
 
     const currentSecs = status.positionMillis / 1000;
 
-    // loop بین trim points
     if (currentSecs >= trimRange[1]) {
       videoRef.current?.setPositionAsync(trimRange[0] * 1000);
     }
   };
+  const togglePlay = async () => {
+    if (!videoRef.current) return;
 
-  const handleSliderChange = (values: number[]) => {
-    setTrimRange(values);
-    videoRef.current?.setPositionAsync(values[0] * 1000);
+    if (isPlaying) {
+      await videoRef.current.pauseAsync();
+    } else {
+      await videoRef.current.playAsync();
+    }
+
+    setIsPlaying(!isPlaying);
   };
+  const dispatch = useAppDispatch();
 
   const handleNextPress = () => {
     onMovieDataChange({
-      title,
       trimStart: trimRange[0],
       trimEnd: trimRange[1],
       duration,
     });
-    onNext({
-      startTime: trimRange[0],
-      endTime: trimRange[1],
-      originalSrc: videoSrc,
-      duration, // اضافه شد
-    });
+    console.log("VEEDASKLHDKLSCJSAIOJ");
+
+    dispatch(goToStep(2));
   };
 
   const formatTime = (secs: number) => {
@@ -107,7 +123,7 @@ const VideoPreviewStep: React.FC<VideoPreviewStepProps> = ({
   };
 
   return (
-    <View flex={1} backgroundColor="#111827">
+    <View flex={1} backgroundColor="#000000">
       <View
         flex={1}
         justifyContent="center"
@@ -119,52 +135,33 @@ const VideoPreviewStep: React.FC<VideoPreviewStepProps> = ({
             width: videoLayout.width,
             height: videoLayout.height,
             backgroundColor: "black",
-            borderRadius: 16,
             overflow: "hidden",
-            borderWidth: 1,
-            borderColor: "#374151",
           }}
         >
-          <Video
-            ref={videoRef}
-            source={{ uri: videoSrc }}
-            useNativeControls={false}
-            resizeMode={ResizeMode.CONTAIN}
-            style={StyleSheet.absoluteFillObject}
-            onLoad={handleVideoLoad}
-            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-            shouldPlay
-            isLooping={false}
-            isMuted={false}
-          />
+          <Pressable style={{ flex: 1 }} onPress={togglePlay}>
+            <Video
+              ref={videoRef}
+              source={{ uri: videoSrc }}
+              resizeMode={ResizeMode.CONTAIN}
+              style={StyleSheet.absoluteFillObject}
+              onLoad={handleVideoLoad}
+              onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
+              shouldPlay={isPlaying}
+              isLooping={false}
+              isMuted={false}
+            />
+          </Pressable>
         </View>
       </View>
-      <View
-        padding={20}
-        paddingBottom={32}
-        backgroundColor="#1f2937"
-        borderTopLeftRadius={16}
-        borderTopRightRadius={16}
-      >
+      <View padding={20} paddingBottom={62} backgroundColor="#1f2937">
         {duration > 0 ? (
           <>
-            <XStack
-              justifyContent="space-between"
-              alignItems="center"
-              marginBottom={12}
-            >
-              <BaseInput
-                flex={1}
-                value={title}
-                onChangeText={(text: string) => setTitle(text)}
-                placeholder="Title"
-                colorType="primary"
-                variant="outline"
-                marginRight="$2"
-              />
-              <Button bg="transparent" chromeless onPress={handleNextPress}>
-                Next
-              </Button>
+            <XStack justifyContent="space-between" marginTop={8}>
+              <Text color="#9ca3af">{formatTime(trimRange[0])}</Text>
+              <Text color="#10b981">
+                {formatTime(trimRange[1] - trimRange[0])} / 1:00
+              </Text>
+              <Text color="#9ca3af">{formatTime(trimRange[1])}</Text>
             </XStack>
 
             <View alignItems="center" marginBottom={16}>
@@ -194,27 +191,29 @@ const VideoPreviewStep: React.FC<VideoPreviewStepProps> = ({
           </>
         ) : (
           <Text textAlign="center" color="#9ca3af" marginBottom={16}>
-            در حال بارگذاری اطلاعات ویدیو...
+            Loading...
           </Text>
         )}
-
-        <Button
-          pos="absolute"
-          r="$2"
-          bg="transparent"
-          chromeless
-          onPress={handleNextPress}
-        >
-          Next
-        </Button>
-        <BaseInput
-          value={title}
-          onChangeText={(text: string) => setTitle(text)}
-          placeholder="Title"
-          paddingRight="$10"
-          colorType="primary"
-          variant="outline"
-        />
+        <XStack justifyContent="space-between" alignItems="center" gap="$2">
+          <BaseButton
+            flex={1}
+            size="$3"
+            bg="$greenMain"
+            chromeless
+            onPress={handleNextPress}
+          >
+            Next
+          </BaseButton>
+          <BaseButton
+            flex={1}
+            size="$3"
+            bg="transparent"
+            chromeless
+            onPress={onCancel}
+          >
+            Cancel
+          </BaseButton>
+        </XStack>
       </View>
     </View>
   );

@@ -1,10 +1,11 @@
-import { VideoView, useVideoPlayer } from "expo-video";
+import { useVideoPlayer } from "expo-video";
 import React, { useEffect } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import { useAppSelector } from "../store/reduxHookType";
 import { getImageUrl } from "../utils/fileHelper";
 import OptionBottom from "./OptionBottom";
 import OptionTop from "./OptionTop";
+import CustomVideo from "./ui/CustomVideo";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -70,15 +71,7 @@ export default function VideoSection({
 
       <View style={styles.videoContainer}>
         <View style={styles.videoCenter}>
-          <VideoView
-            player={player}
-            style={styles.video}
-            allowsFullscreen={false}
-            allowsPictureInPicture={false}
-            nativeControls={false}
-            contentFit="contain"
-          />
-
+          <CustomVideo player={player} />
           <OptionBottom
             socket={socket}
             userIdLogin={userIdLogin}

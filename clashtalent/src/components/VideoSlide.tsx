@@ -19,10 +19,6 @@ export default function ShowWatchSlide({
   showLiked,
   showCountLiked,
 }: any) {
-  const [playingPosition, setPlayingPosition] = React.useState<number>(0);
-  const handleVideoPlay = (position: number) => {
-    setPlayingPosition((prev) => (prev === position ? -1 : position));
-  };
   const resultInserted =
     video?.likeInserted > video?.likeMatched
       ? "Win"
