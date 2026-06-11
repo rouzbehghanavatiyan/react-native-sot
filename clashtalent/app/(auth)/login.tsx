@@ -3,7 +3,7 @@ import BaseButton from "@/src/components/BaseButtom";
 import BaseInput from "@/src/components/BaseInput";
 import { login } from "@/src/services/authService";
 import { saveToken } from "@/src/services/tokenServices";
-import { RsetUserId } from "@/src/slices/main";
+import { RsetUserId, RsetUserLogin } from "@/src/slices/main";
 import { useAppDispatch } from "@/src/store/reduxHookType";
 import { validateFormLogin } from "@/src/utils/errorValidation";
 import { FormErrors, FormValues } from "@/src/utils/GlobalType";
@@ -42,7 +42,6 @@ const LoginScreen: React.FC<any> = () => {
 
     try {
       setLoading(true);
-
       const response = await login({
         userName: formState.username,
         password: formState.password,
@@ -53,16 +52,17 @@ const LoginScreen: React.FC<any> = () => {
         const token = response?.data?.token;
         const decoded: any = jwtDecode(token);
         const userId: any = Object.values(decoded)?.[1];
+        dispatch(RsetUserLogin({ token, userId }));
         dispatch(RsetUserId(userId));
         router.replace("/(tabs)/watch");
       }
-      setLoading(false);
     } catch (error: any) {
       setLoginAttempts((prev) => prev + 1);
       setErrors((prev) => ({
         ...prev,
         general: "Something went wrong. Please try again.",
       }));
+    } finally {
       setLoading(false);
     }
   };
@@ -107,7 +107,7 @@ const LoginScreen: React.FC<any> = () => {
               label="Username"
               value={formState.username}
               onChangeText={(text) => handleInputChange("username", text)}
-              placeholder="Enter your username"
+              placeholder="username"
               colorType="primary"
               hasError={!!errors.username}
               variant="outline"
@@ -127,7 +127,7 @@ const LoginScreen: React.FC<any> = () => {
                 secureTextEntry={!showPassword}
                 value={formState.password}
                 onChangeText={(text) => handleInputChange("password", text)}
-                placeholder="Enter your password"
+                placeholder="password"
                 errorMessage={errors.password}
                 rightIcon={
                   <View
