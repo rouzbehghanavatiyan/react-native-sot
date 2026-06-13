@@ -54,7 +54,6 @@ const Arena: React.FC<any> = ({ updateStepData }) => {
 const styles = StyleSheet.create({
   container: {
     height: "100%",
-    backgroundColor: "#fff",
     borderRadius: 8,
   },
   icon: {

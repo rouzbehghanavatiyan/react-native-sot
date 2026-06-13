@@ -118,8 +118,7 @@ export const removeInvite = async (invId: number) => {
 };
 
 export const addInvite = async (postData: any) => {
-  // const url = `${baseURL}/addInvite`;
-  // return await axios.post(url, postData);
+  return await api.post(`/addInvite`, postData);
 };
 
 export const addMovie = async (data: any) => {

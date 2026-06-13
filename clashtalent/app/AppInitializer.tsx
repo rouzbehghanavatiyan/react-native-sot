@@ -28,11 +28,24 @@ import { io } from "socket.io-client";
 export function AppInitializer({ children }: { children: React.ReactNode }) {
   const main = useSelector((state: any) => state.main);
   const dispatch = useDispatch();
+  const SOCKET_URL = "http://192.168.133.157:4005";
   const router = useRouter();
   const segments = useSegments();
   const pathname = usePathname();
   const params = useLocalSearchParams();
-  const socket = useMemo(() => io("http://171.22.25.222:4005"), []);
+  const socket = useMemo(
+    () =>
+      io(SOCKET_URL, {
+        transports: ["websocket"],
+        autoConnect: false,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        timeout: 20000,
+      }),
+    [],
+  );
+
   const userId = main?.userId;
   const isChat = pathname?.includes("chat");
   const [chatInfo, setChatInfo] = useState({
@@ -42,7 +55,6 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
 
   const load = async () => {
     const t = await AsyncStorage.getItem("token");
-    logger.info("ggggggggggggggggggggggggggggggggg");
     console.log(t);
 
     if (!t) return;
@@ -81,6 +93,8 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     }
   };
 
+  console.log("socket socket socket", socket);
+
   useEffect(() => {
     load();
   }, []);
@@ -99,13 +113,34 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   }, [pathname, params?.user, userId]);
 
   useEffect(() => {
-    if (!socket || !chatInfo.userIdLogin) return;
-    dispatch(RsetSocketConfig(socket));
-    socket.emit("register_user", chatInfo.userIdLogin);
+    if (!socket) return;
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected:", socket.id);
+
+      if (chatInfo.userIdLogin) {
+        socket.emit("register_user", chatInfo.userIdLogin);
+      }
+    });
+
+    socket.on("connect_error", (error) => {
+      console.log("❌ Socket connect_error:", error.message);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("⚠️ Socket disconnected:", reason);
+    });
+
     socket.on("all_user_online", (data: any) => {
       dispatch(RsetGiveUserOnlines(data));
     });
+
+    dispatch(RsetSocketConfig(socket));
+
     return () => {
+      socket.off("connect");
+      socket.off("connect_error");
+      socket.off("disconnect");
       socket.off("all_user_online");
     };
   }, [socket, chatInfo.userIdLogin]);

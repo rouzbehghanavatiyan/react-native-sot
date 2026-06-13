@@ -62,7 +62,7 @@ const Skill: React.FC<any> = ({
   }, {});
 
   return (
-    <View bg="white" borderRadius="$2">
+    <View borderRadius="$2">
       <MainTitle title="Skill" />
       <SoftLink
         iconMap={arenaIconMap}
