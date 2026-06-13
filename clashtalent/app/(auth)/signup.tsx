@@ -116,7 +116,7 @@ export default function SignUpScreen() {
             label="Username"
             value={inputs.username}
             onChangeText={(text) => handleInputChange("username", text)}
-            placeholder="Enter your username"
+            placeholder="username"
             colorType="primary"
             variant="outline"
             errorMessage={errors.username}
@@ -126,7 +126,7 @@ export default function SignUpScreen() {
             label="Email"
             value={inputs.email}
             onChangeText={(text) => handleInputChange("email", text)}
-            placeholder="Enter your email"
+            placeholder="email"
             colorType="primary"
             variant="outline"
             errorMessage={errors.email}
@@ -139,7 +139,7 @@ export default function SignUpScreen() {
             secureTextEntry={!showPassword}
             value={inputs.password}
             onChangeText={(text) => handleInputChange("password", text)}
-            placeholder="Enter your password"
+            placeholder="password"
             colorType="primary"
             variant="outline"
             errorMessage={errors.password}

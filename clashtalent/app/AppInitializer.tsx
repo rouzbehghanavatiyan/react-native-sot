@@ -4,13 +4,13 @@ import {
   followingList,
   profileAttachment,
 } from "@/src/services/masterServices";
-import { getToken } from "@/src/services/tokenServices";
 import {
   RsetAllFollowerList,
   RsetCategory,
   RsetGiveUserOnlines,
   RsetSocketConfig,
   RsetUserLogin,
+  RsetUserId,
 } from "@/src/slices/main";
 import { logger } from "@/src/utils/logger";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,12 +21,17 @@ import {
   useSegments,
 } from "expo-router";
 import { jwtDecode } from "jwt-decode";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
+import { View } from "@tamagui/core";
+
+type JwtPayload = {
+  [key: string]: any;
+};
 
 export function AppInitializer({ children }: { children: React.ReactNode }) {
-  const main = useSelector((state: any) => state.main);
   const dispatch = useDispatch();
   const SOCKET_URL = "http://192.168.133.157:4005";
   const router = useRouter();
@@ -47,11 +52,22 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   );
 
   const userId = main?.userId;
+  const userLoginId = main?.userLogin?.user?.id;
+
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  const socket = useMemo(() => {
+    return io("http://171.22.25.222:4005", {
+      autoConnect: true,
+    });
+  }, []);
+
   const isChat = pathname?.includes("chat");
-  const [chatInfo, setChatInfo] = useState({
-    userIdLogin: null as number | null,
-    reciveUserId: null as number | null,
-  });
+
+  const receiveUserId = useMemo(() => {
+    if (!isChat) return null;
+    return Number(params?.user) || null;
+  }, [isChat, params?.user]);
 
   const load = async () => {
     const t = await AsyncStorage.getItem("token");
@@ -61,56 +77,113 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     fixGetUser(t);
   };
 
-  const loadDataWithId = async (userId: number) => {
-    if (!userId) return;
+  const loadUserMasterData = useCallback(
+    async (targetUserId: number) => {
+      if (!targetUserId) return;
+
+      try {
+        const [cat, followingRes, followerRes] = await Promise.all([
+          categoryList(),
+          followingList(targetUserId),
+          followerList(targetUserId),
+        ]);
+
+        dispatch(RsetCategory(cat?.data?.data || []));
+        dispatch(RsetAllFollowerList(followerRes?.data?.data || []));
+      } catch (error) {
+        logger.error("loadUserMasterData error", error);
+      }
+    },
+    [dispatch],
+  );
+
+  const loadCurrentUser = useCallback(
+    async (savedToken: string) => {
+      try {
+        const userIdFromToken = Number(getUserIdFromToken(savedToken));
+
+        if (!userIdFromToken) {
+          throw new Error("Invalid user id from token");
+        }
+
+        dispatch(
+          RsetUserLogin({
+            token: savedToken,
+            userId: userIdFromToken,
+          }),
+        );
+
+        dispatch(RsetUserId(userIdFromToken));
+
+        const profileRes = await profileAttachment(userIdFromToken);
+        const userData = profileRes?.data?.data;
+
+        if (userData) {
+          dispatch(RsetUserLogin(userData));
+        }
+
+        const finalUserId = Number(userData?.user?.id || userIdFromToken);
+
+        await loadUserMasterData(finalUserId);
+      } catch (error) {
+        logger.error("loadCurrentUser error", error);
+
+        await AsyncStorage.removeItem("token");
+
+        dispatch(
+          RsetUserLogin({
+            token: null,
+            userId: null,
+          }),
+        );
+
+        dispatch(RsetUserId(null));
+      }
+    },
+    [dispatch, getUserIdFromToken, loadUserMasterData],
+  );
+
+  const initializeAuth = useCallback(async () => {
     try {
-      const [cat, followingRes, followerRes] = await Promise.all([
-        categoryList(),
-        followingList(userId),
-        followerList(userId),
-      ]);
-      dispatch(RsetCategory(cat?.data?.data || []));
-      dispatch(RsetAllFollowerList(followerRes?.data?.data || []));
-    } catch (e) {
-      logger.error("init error", e);
+      const savedToken = await AsyncStorage.getItem("token");
+
+      if (savedToken) {
+        await loadCurrentUser(savedToken);
+      }
+    } catch (error) {
+      logger.error("initializeAuth error", error);
+    } finally {
+      setIsInitializing(false);
     }
-  };
-
-  const fixGetUser = async (token: any) => {
-    try {
-      const decoded: any = jwtDecode(token);
-      const userIdToken: any = Object.values(decoded)?.[1];
-      logger.info("userIdToken", userIdToken);
-      logger.info("userId", userId);
-      const resImageProfile = await profileAttachment(userId || userIdToken);
-      logger.info("resImageProfile", resImageProfile);
-      const userData = resImageProfile?.data?.data;
-      dispatch(RsetUserLogin(userData));
-
-      await loadDataWithId(Number(userId));
-    } catch {
-      await AsyncStorage.removeItem("token");
-    }
-  };
-
-  console.log("socket socket socket", socket);
+  }, [loadCurrentUser]);
 
   useEffect(() => {
-    load();
-  }, []);
+    initializeAuth();
+  }, [initializeAuth]);
 
   useEffect(() => {
-    const newReciveUserId = isChat ? Number(params?.user) || null : null;
-    if (
-      chatInfo.userIdLogin !== userId ||
-      chatInfo.reciveUserId !== newReciveUserId
-    ) {
-      setChatInfo({
-        userIdLogin: userId || null,
-        reciveUserId: newReciveUserId,
-      });
+    if (!isInitializing) {
+      const inAuthGroup = segments[0] === "(auth)";
+      const isLoggedIn = Boolean(token || userId || userLoginId);
+
+      if (!isLoggedIn && !inAuthGroup) {
+        router.replace("/login");
+        return;
+      }
+
+      if (isLoggedIn && inAuthGroup) {
+        router.replace("/(tabs)/watch");
+      }
     }
-  }, [pathname, params?.user, userId]);
+  }, [isInitializing, segments, token, userId, userLoginId, router]);
+
+  useEffect(() => {
+    const activeUserId = Number(userLoginId || userId);
+
+    if (!activeUserId) return;
+
+    loadUserMasterData(activeUserId);
+  }, [userLoginId, userId, loadUserMasterData]);
 
   useEffect(() => {
     if (!socket) return;
@@ -133,9 +206,9 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
 
     socket.on("all_user_online", (data: any) => {
       dispatch(RsetGiveUserOnlines(data));
-    });
+    };
 
-    dispatch(RsetSocketConfig(socket));
+    socket.on("all_user_online", handleAllUsersOnline);
 
     return () => {
       socket.off("connect");
@@ -143,28 +216,19 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
       socket.off("disconnect");
       socket.off("all_user_online");
     };
-  }, [socket, chatInfo.userIdLogin]);
+  }, [socket, userLoginId, userId, dispatch]);
 
   useEffect(() => {
-    if (main?.userLogin?.user?.id) {
-      loadDataWithId(main.userLogin.user.id);
-    }
-  }, [main?.userLogin?.user?.id]);
+    if (!receiveUserId) return;
+  }, [receiveUserId]);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = await getToken();
-      const inAuthGroup = segments[0] === "(auth)";
-
-      if (!token && !inAuthGroup) {
-        router.replace("/login");
-      } else if (token && inAuthGroup) {
-        router.replace("/(tabs)/watch");
-      }
-    };
-
-    checkAuth();
-  }, [segments]);
+  if (isInitializing) {
+    return (
+      <View flex={1} justifyContent="center" alignItems="center">
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return <>{children}</>;
 }
