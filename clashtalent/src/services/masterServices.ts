@@ -83,13 +83,11 @@ export const addAttachment = async (postData: any) => {
 };
 
 export const removeFollower = async (postData: any) => {
-  // const url = `${baseURL}/removeFollower`;
-  // return await axios.delete(url, { data: postData });
+  return await api.delete(`/removeFollower`, { data: postData });
 };
 
 export const addFollower = async (postData: any) => {
-  // const url = `${baseURL}/addFollower`;
-  // return await axios.post(url, postData);
+  return await api.post(`/addFollower`, postData);
 };
 
 export const removeLike = async (postData: any) => {

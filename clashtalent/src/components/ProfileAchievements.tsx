@@ -13,7 +13,12 @@ const ProfileAchievements: React.FC = () => {
   ];
 
   return (
-    <XStack mb="$2" alignItems="center" justifyContent="space-around" w="100%">
+    <XStack
+      alignItems="center"
+      borderBottomColor={"darkblue"}
+      justifyContent="space-around"
+      w="100%"
+    >
       {achievements.map((cup, index) => (
         <YStack key={index} alignItems="center" justifyContent="flex-end">
           <Image

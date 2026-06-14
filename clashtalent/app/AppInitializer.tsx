@@ -6,14 +6,16 @@ import {
 } from "@/src/services/masterServices";
 import {
   RsetAllFollowerList,
+  RsetAllFollowingList,
   RsetCategory,
   RsetGiveUserOnlines,
   RsetSocketConfig,
-  RsetUserLogin,
   RsetUserId,
+  RsetUserLogin,
 } from "@/src/slices/main";
 import { logger } from "@/src/utils/logger";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { View } from "@tamagui/core";
 import {
   useLocalSearchParams,
   usePathname,
@@ -25,7 +27,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
-import { View } from "@tamagui/core";
 
 type JwtPayload = {
   [key: string]: any;
@@ -33,27 +34,21 @@ type JwtPayload = {
 
 export function AppInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
-
   const router = useRouter();
   const segments = useSegments();
   const pathname = usePathname();
   const params = useLocalSearchParams();
-
   const main = useSelector((state: any) => state.main);
-
   const token = main?.token;
   const userId = main?.userId;
   const userLoginId = main?.userLogin?.user?.id;
-
   const [isInitializing, setIsInitializing] = useState(true);
-
+  const isChat = pathname?.includes("chat");
   const socket = useMemo(() => {
     return io("http://171.22.25.222:4005", {
       autoConnect: true,
     });
   }, []);
-
-  const isChat = pathname?.includes("chat");
 
   const receiveUserId = useMemo(() => {
     if (!isChat) return null;
@@ -63,12 +58,12 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   const getUserIdFromToken = useCallback((token: string) => {
     const decoded: JwtPayload = jwtDecode(token);
 
-    return Object.values(decoded)?.[1];
+    return decoded.userId || decoded.id || decoded.sub || null;
   }, []);
 
   const loadUserMasterData = useCallback(
     async (targetUserId: number) => {
-      if (!targetUserId) return;
+      if (!targetUserId || isNaN(targetUserId)) return;
 
       try {
         const [cat, followingRes, followerRes] = await Promise.all([
@@ -77,8 +72,9 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
           followerList(targetUserId),
         ]);
 
-        dispatch(RsetCategory(cat?.data?.data || []));
-        dispatch(RsetAllFollowerList(followerRes?.data?.data || []));
+        dispatch(RsetCategory(cat?.data?.data ?? []));
+        dispatch(RsetAllFollowerList(followerRes?.data?.data ?? []));
+        dispatch(RsetAllFollowingList(followingRes?.data?.data ?? []));
       } catch (error) {
         logger.error("loadUserMasterData error", error);
       }
@@ -98,7 +94,8 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
         dispatch(
           RsetUserLogin({
             token: savedToken,
-            userId: userIdFromToken,
+            user: userData?.user,
+            profile: userData,
           }),
         );
 
@@ -110,10 +107,6 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
         if (userData) {
           dispatch(RsetUserLogin(userData));
         }
-
-        const finalUserId = Number(userData?.user?.id || userIdFromToken);
-
-        await loadUserMasterData(finalUserId);
       } catch (error) {
         logger.error("loadCurrentUser error", error);
 

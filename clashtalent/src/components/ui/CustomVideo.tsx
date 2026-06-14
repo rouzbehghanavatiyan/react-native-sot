@@ -1,11 +1,12 @@
+import { useIsFocused } from "@react-navigation/native";
 import { VideoView } from "expo-video";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Dimensions,
-    PanResponder,
-    Pressable,
-    StyleSheet,
-    View,
+  Dimensions,
+  PanResponder,
+  Pressable,
+  StyleSheet,
+  View,
 } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -13,6 +14,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CustomVideo = ({ player }: any) => {
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(1);
+  const isFocused = useIsFocused();
 
   const barWidth = SCREEN_WIDTH;
 
@@ -28,6 +30,15 @@ const CustomVideo = ({ player }: any) => {
       sub.remove();
     };
   }, [player]);
+
+  // توقف ویدیو وقتی صفحه عوض شود
+  useEffect(() => {
+    if (!player) return;
+
+    if (!isFocused) {
+      player.pause();
+    }
+  }, [isFocused, player]);
 
   const togglePlay = () => {
     if (!player) return;

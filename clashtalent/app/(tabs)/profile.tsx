@@ -78,7 +78,7 @@ const Profile: React.FC = () => {
   }, [main?.userLogin?.score, userIdWhantToShow]);
 
   const renderHeader = () => (
-    <YStack bg="$backgroundPaper" gap="$4" pb="$4">
+    <YStack bg="$grey100" gap="$4" p="$2">
       <ProfileHeader
         userImage={findImg}
         userName={
@@ -86,7 +86,7 @@ const Profile: React.FC = () => {
         }
         score={userIdWhantToShow?.score || main?.userLogin?.score}
         followersCount={main?.allFollowerList?.length}
-        followingCount={main?.allFollingList?.getMapFollowingId?.length}
+        followingCount={main?.allFollowingList?.length}
         onEditPress={onOpen}
       />
       <ProfileBio

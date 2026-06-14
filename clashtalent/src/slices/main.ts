@@ -33,7 +33,6 @@ const initialDataState: DataState = {
 
 const initialState: any = {
   showTimerButtn: false,
-  allFollingList: {},
   lastMatch: [],
   unreadMessagesCount: 0,
   watchVideo: { ...initialDataState },
@@ -54,6 +53,7 @@ const initialState: any = {
     data: [],
   },
   allFollowerList: [],
+  allFollowingList: [],
   category: [],
   userLogin: {},
   userId: 0,
@@ -78,8 +78,8 @@ const mainSlice = createSlice({
     RsetAllFollowerList: (state, action: PayloadAction<any[]>) => {
       state.allFollowerList = action.payload;
     },
-    RsetAllFollingList: (state, action: PayloadAction<any[]>) => {
-      state.allFollingList = action.payload;
+    RsetAllFollowingList: (state, action: PayloadAction<any[]>) => {
+      state.allFollowingList = action.payload;
     },
     RsetLastMatch: (state, action: PayloadAction<any[]>) => {
       state.lastMatch = action.payload;
@@ -209,8 +209,7 @@ export const {
   resetShowWatchState,
   resetAllFeeds,
   RsetAllFollowerList,
-  RsetAllFollingList,
-  RsetLastMatch,
+  RsetAllFollowingList,
   RsetCategory,
   RsetUserLogin,
   RsetSocketConfig,

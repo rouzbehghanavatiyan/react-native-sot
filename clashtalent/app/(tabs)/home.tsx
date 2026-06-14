@@ -37,7 +37,6 @@ const HomeScreen: React.FC = () => {
 
   const handleOpenComments = useCallback((video: any, position: number) => {
     console.log("handleOpenComments called", { video, position });
-
     setSelectedVideo(video);
     setCommentInfo(video);
     setCommentPosition(position ?? 0);
@@ -133,20 +132,17 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
       ) : (
-        // نکته مهم: FlashList باید والد با ابعاد مشخص داشته باشه
         <View style={{ flex: 1, width, height: usableHeight }}>
           <FlashList
             data={data || []}
             keyExtractor={(item, index) =>
               item?.id?.toString() || index.toString()
             }
-            pagingEnabled // برای اسنپ شدن مشابه کروسل
+            pagingEnabled
             showsVerticalScrollIndicator={false}
-            // estimatedItemSize={usableHeight}
             viewabilityConfig={viewabilityConfig}
             onViewableItemsChanged={onViewableItemsChanged}
             renderItem={({ item, index }) => (
-              // رپر با ارتفاع ثابت برای جلوگیری از بهم ریختگی اسکرول
               <View style={{ width, height: usableHeight }}>
                 <ShowWatchSlide
                   showLiked={false}

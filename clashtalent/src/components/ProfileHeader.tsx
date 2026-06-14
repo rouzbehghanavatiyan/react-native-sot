@@ -1,8 +1,7 @@
-import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import React, { forwardRef, useCallback } from "react";
 import { Text, View, XStack, YStack } from "tamagui";
-
 import { addAttachment, profileAttachment } from "../services/masterServices";
 import { RsetUserLogin } from "../slices/main";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
@@ -30,9 +29,9 @@ const ProfileHeader = forwardRef<any, ProfileHeaderProps>(
     ref,
   ) => {
     const dispatch = useAppDispatch();
-    const navigation = useNavigation<any>();
     const main = useAppSelector((state) => state?.main);
     const userId = main?.userLogin?.user?.id;
+    const router = useRouter();
 
     const handleImageProfileUpload = useCallback(async () => {
       const permissionResult =
@@ -97,7 +96,6 @@ const ProfileHeader = forwardRef<any, ProfileHeaderProps>(
               imgSize={100}
             />
           </View>
-
           <YStack ml="$2" gap="$2" justifyContent="center">
             <Text fontSize="$6" fontWeight="bold" color="$textPrimary">
               {userName}
@@ -105,31 +103,33 @@ const ProfileHeader = forwardRef<any, ProfileHeaderProps>(
 
             <XStack gap="$4">
               <View
-                onPress={() => navigation.navigate("Followers")}
+                onPress={() => router.push("/(social)/followers")}
+                // onPress={() => navigation.navigate("/(social)/followers")}
                 alignItems="center"
                 px="$2"
                 py="$1"
                 cursor="pointer"
               >
-                <Text fontWeight="bold" color="$textPrimary">
+                <Text fontWeight="bold" color="$textPrimary" fontSize="$3">
                   {followersCount || 0}
                 </Text>
-                <Text fontWeight="bold" color="$textSecondary" fontSize="$2">
+                <Text fontWeight="bold" color="$textSecondary" fontSize="$3">
                   Followers
                 </Text>
               </View>
 
               <View
-                onPress={() => navigation.navigate("Following")}
+                onPress={() => router.push("/(social)/following")}
+                // onPress={() => navigation.navigate("/(social)/following")}
                 alignItems="center"
                 px="$2"
                 py="$1"
                 cursor="pointer"
               >
-                <Text fontWeight="bold" color="$textPrimary">
+                <Text fontWeight="bold" color="$textPrimary" fontSize="$3">
                   {followingCount || 0}
                 </Text>
-                <Text fontWeight="bold" color="$textSecondary" fontSize="$2">
+                <Text fontWeight="bold" color="$textSecondary" fontSize="$3">
                   Following
                 </Text>
               </View>
@@ -142,3 +142,5 @@ const ProfileHeader = forwardRef<any, ProfileHeaderProps>(
 );
 
 export default ProfileHeader;
+
+ProfileHeader.displayName = "ProfileHeader";

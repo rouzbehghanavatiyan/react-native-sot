@@ -257,8 +257,23 @@ const ImageRank: React.FC<ProfileWithRankProps> = ({
               resizeMode="contain"
             />
             {rankData.starType === "word" && rankData.displayNumber && (
-              <View style={styles.rankNumberContainer}>
-                <RNText style={styles.rankNumberText}>
+              <View
+                style={[
+                  styles.rankNumberContainer,
+                  {
+                    width: rankSize * 0.35,
+                    height: rankSize * 0.35,
+                  },
+                ]}
+              >
+                <RNText
+                  style={[
+                    styles.rankNumberText,
+                    {
+                      fontSize: rankSize * 0.16,
+                    },
+                  ]}
+                >
                   {rankData.displayNumber}
                 </RNText>
               </View>
@@ -301,14 +316,14 @@ const styles = StyleSheet.create({
   },
   rankNumberContainer: {
     position: "absolute",
-    top: "70%",
-    left: "65%",
-    transform: [{ translateX: -12 }, { translateY: -12 }],
+    top: "50%",
+    left: "50%",
     alignItems: "center",
     justifyContent: "center",
+    transform: [{ translateX: "-50%" }, { translateY: "-50%" }],
   },
   rankNumberText: {
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: "bold",
     color: "#ffffff",
     textShadowColor: "rgba(0, 0, 0, 0.75)",

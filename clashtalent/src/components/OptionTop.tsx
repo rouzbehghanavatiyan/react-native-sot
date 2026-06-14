@@ -2,7 +2,7 @@ import { addFollower, removeFollower } from "@/src/services/masterServices";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
-import { Alert, Pressable } from "react-native";
+import { Pressable } from "react-native";
 import { Popover, Separator, Text, View, XStack } from "tamagui";
 import { getImageUrl } from "../utils/fileHelper";
 import Follows from "./Follows";
@@ -30,11 +30,8 @@ const OptionTop: React.FC<OptionTopProps> = ({
   userIdLogin,
   main,
 }) => {
-  if (!video) {
-    console.log("OptionTop: video is undefined");
-    return null;
-  }
-
+  const [localIsFollowed, setLocalIsFollowed] = useState(false);
+  const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const currentUserId = main?.userLogin?.user?.id;
 
   const profile =
@@ -45,9 +42,6 @@ const OptionTop: React.FC<OptionTopProps> = ({
       : video?.profileMatched
         ? getImageUrl(video.profileMatched)
         : null;
-
-  const [localIsFollowed, setLocalIsFollowed] = useState(false);
-  const [isLoadingFollow, setIsLoadingFollow] = useState(false);
 
   const userInfo =
     positionVideo === 0 ? video?.userInserted : video?.userMatched;
@@ -72,18 +66,10 @@ const OptionTop: React.FC<OptionTopProps> = ({
     setLocalIsFollowed(getInitialFollowStatus());
   }, [video, positionVideo]);
 
-  const handleFallowClick = async () => {
+  const handleFallowClick = async (video: any, position: number) => {
     if (isLoadingFollow) return;
-
     const userIdFollow =
-      positionVideo === 0 ? video?.userInserted?.id : video?.userMatched?.id;
-
-    if (!userIdFollow) {
-      console.error("User ID to follow is undefined");
-      Alert.alert("Error", "Unable to process follow request");
-      return;
-    }
-
+      position === 0 ? video?.userInserted?.id : video?.userMatched?.id;
     const postData = {
       userId: userIdLogin || null,
       followerId: userIdFollow || null,
@@ -105,7 +91,7 @@ const OptionTop: React.FC<OptionTopProps> = ({
       setLocalIsFollowed(newFollowStatus);
     } catch (error) {
       console.error("Error in follow operation:", error);
-      Alert.alert("Error", "Failed to update follow status");
+      setLocalIsFollowed(localIsFollowed);
     } finally {
       setIsLoadingFollow(false);
     }
@@ -150,7 +136,7 @@ const OptionTop: React.FC<OptionTopProps> = ({
             {checkMyVideo && (
               <Follows
                 title={localIsFollowed ? "Unfollow" : "Follow"}
-                onFollowClick={handleFallowClick}
+                onFollowClick={() => handleFallowClick(video, positionVideo)}
                 bgColor="white"
               />
             )}
