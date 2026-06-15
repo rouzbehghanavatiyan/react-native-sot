@@ -9,29 +9,7 @@ import {
 } from "../services/masterServices";
 import { logger } from "../utils/logger";
 import { RsetShowTimerButtn } from "./main";
-
-interface VideoState {
-  videoSrc: string | null;
-  videoFile: any | null;
-  showTimeout: boolean;
-  isLoading: boolean;
-  error: string | null;
-  currentStep: number;
-  uploadStatus: "idle" | "success" | "failed";
-  resMovieData: any | null;
-  movieData: {
-    parentId: number | null;
-    userId: number | null;
-    movieId: number | null;
-    status: number | null;
-    inviteId: number | null;
-    title: string;
-    desc: string;
-    trimStart: number;
-    trimEnd: number;
-    duration: number;
-  };
-}
+import { VideoState } from "./type";
 
 const initialState: VideoState = {
   videoSrc: null,
@@ -76,13 +54,12 @@ export const removeInviteThunk = createAsyncThunk(
 export const uploadFullProcessThunk = createAsyncThunk(
   "video/uploadFullProcess",
   async (
-    { userId, gearId, mode, allFormData, socket, movieMeta }: any,
+    { userId, gearId, mode, allFormData, socket, movieMeta, router }: any,
     { rejectWithValue, dispatch },
   ) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     try {
-      // 1. دریافت gearId از AsyncStorage (Async)
       const storedGearId = await AsyncStorage.getItem("gearId");
 
       const postData = {
@@ -96,17 +73,19 @@ export const uploadFullProcessThunk = createAsyncThunk(
       const movieRes = await addMovie(postData);
       const movieDataRes = movieRes?.data;
       const movieId = movieRes?.data?.data?.id;
-      logger.info("Helllllllllllllllllllllllllllo addMovie", movieRes);
+
+      logger.info("addMovie response", movieRes);
+
       if (movieDataRes?.status !== 0) {
         throw new Error("Error in recording initial movie information");
       }
 
-      let inviteData = null;
+      if (!movieId) {
+        throw new Error("Movie id is missing");
+      }
 
       const formData = new FormData();
-      logger.info(
-        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIts",
-      );
+
       if (allFormData?.video) {
         formData.append("formFile", {
           uri: allFormData.video.uri,
@@ -123,18 +102,16 @@ export const uploadFullProcessThunk = createAsyncThunk(
         } as any);
       }
 
-      formData.append("attachmentId", movieId);
+      formData.append("attachmentId", String(movieId));
       formData.append("attachmentType", "mo");
       formData.append("attachmentName", "movies");
-      logger.info("Nexttttttttttttttttttttttt", formData);
-      const attachRes = await addAttachment(formData);
-      logger.info(
-        "Endddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-        attachRes,
-      );
 
-      if (attachRes.data.status !== 0) {
-        throw new Error("Error in recording initial movie information!");
+      logger.info("attachment formData", formData);
+
+      const attachRes = await addAttachment(formData);
+
+      if (attachRes?.data?.status !== 0) {
+        throw new Error("Error in recording movie attachment!");
       }
 
       const postInvite = {
@@ -145,39 +122,81 @@ export const uploadFullProcessThunk = createAsyncThunk(
       };
 
       const inviteRes = await addInvite(postInvite);
+
+      logger.info("invite response", inviteRes);
+
+      if (inviteRes?.data?.status !== 0) {
+        throw new Error("Error in creating invite");
+      }
+
+      const inviteData = inviteRes?.data?.data;
+
       dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(true));
 
-      inviteData = inviteRes?.data?.data;
-
-      if (inviteData?.userId !== 0 && socket) {
-        if (timeoutId) clearTimeout(timeoutId);
-        dispatch(RsetShowTimerButtn(false));
-        socket.emit("add_invite_offline", inviteData);
-      } else {
-        // تایمر ۶۰ ثانیه‌ای
+      if (!socket || !socket.connected) {
         timeoutId = setTimeout(() => {
-          dispatch(RsetShowTimerButtn(false)); // همچنین تایمر را مخفی می‌کنیم
-          // dispatch(
-          //   RsetMessageModal({
-          //     show: true,
-          //     title: "Matching timed out. Please try again.",
-          //     icon: "danger",
-          //   }),
-          // );
-          Alert.alert("Matching timed out. Please try again.");
+          dispatch(RsetShowTimerButtn(false));
+          Alert.alert("Socket is not connected. Please try again.");
         }, 60000);
+
+        return {
+          modeType: mode?.typeMode,
+          movieData: movieDataRes,
+          inviteData,
+        };
+      }
+
+      /**
+       * ارسال socket با ACK
+       */
+      const socketResult: any = await new Promise((resolve, reject) => {
+        socket
+          .timeout(20000)
+          .emit("add_invite_offline", inviteData, (err: any, response: any) => {
+            if (err) {
+              reject(new Error("Socket timeout"));
+              return;
+            }
+
+            resolve(response);
+          });
+      });
+
+      logger.info("add_invite_offline socketResult", socketResult);
+
+      if (socketResult?.status !== 0) {
+        throw new Error(socketResult?.message || "Socket invite failed");
+      }
+
+      /**
+       * اگر socket موفق بود، تایمر را خاموش کن
+       */
+      if (timeoutId) clearTimeout(timeoutId);
+
+      dispatch(RsetShowTimerButtn(false));
+
+      /**
+       * Redirect به profile بعد از موفقیت socket
+       */
+      if (router) {
+        router.replace("/(tabs)/profile");
       }
 
       return {
         modeType: mode?.typeMode,
         movieData: movieDataRes,
-        inviteData: inviteData,
+        inviteData,
+        socketResult,
       };
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId);
-      dispatch(RsetIsLoading(false)); // حتما لودینگ را در خطا هم بردارید
+
+      dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(false));
+
+      Alert.alert(error?.message || "Upload failed");
+
       return rejectWithValue(error.message || "Upload failed");
     }
   },

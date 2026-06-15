@@ -11,9 +11,11 @@ import {
   RsetGiveUserOnlines,
   RsetSocketConfig,
   RsetUserId,
+  RsetUserId,
   RsetUserLogin,
 } from "@/src/slices/main";
 import { logger } from "@/src/utils/logger";
+import { socketClient } from "@/src/utils/socketClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View } from "@tamagui/core";
 import {
@@ -38,21 +40,60 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const pathname = usePathname();
   const params = useLocalSearchParams();
+
+  const SOCKET_URL = "http://192.168.133.157:4005";
+
   const main = useSelector((state: any) => state.main);
-  const token = main?.token;
+
+  const token = main?.userLogin?.token || main?.token || null;
   const userId = main?.userId;
-  const userLoginId = main?.userLogin?.user?.id;
+  const userLoginId = main?.userLogin?.user?.id || main?.userLogin?.userId;
+
   const [isInitializing, setIsInitializing] = useState(true);
   const isChat = pathname?.includes("chat");
   const socket = useMemo(() => {
-    return io("http://171.22.25.222:4005", {
-      autoConnect: true,
+    return io(SOCKET_URL, {
+      transports: ["websocket"],
+      autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      timeout: 20000,
     });
   }, []);
 
+  const getUserIdFromToken = useCallback((savedToken: string) => {
+    try {
+      const decoded: JwtPayload = jwtDecode(savedToken);
+
+      return (
+        decoded?.userId ||
+        decoded?.UserId ||
+        decoded?.nameid ||
+        decoded?.sub ||
+        decoded?.[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
+        null
+      );
+    } catch (error) {
+      logger.error("jwtDecode error", error);
+      return null;
+    }
+  }, []);
+
+  const isChat = pathname?.includes("chat");
+
   const receiveUserId = useMemo(() => {
     if (!isChat) return null;
-    return Number(params?.user) || null;
+
+    const rawUser = params?.user;
+
+    if (Array.isArray(rawUser)) {
+      return Number(rawUser[0]) || null;
+    }
+
+    return Number(rawUser) || null;
   }, [isChat, params?.user]);
 
   const getUserIdFromToken = useCallback((token: string) => {
@@ -72,9 +113,14 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
           followerList(targetUserId),
         ]);
 
-        dispatch(RsetCategory(cat?.data?.data ?? []));
-        dispatch(RsetAllFollowerList(followerRes?.data?.data ?? []));
-        dispatch(RsetAllFollowingList(followingRes?.data?.data ?? []));
+        dispatch(RsetCategory(cat?.data?.data || []));
+        dispatch(RsetAllFollowerList(followerRes?.data?.data || []));
+
+        /**
+         * اگر following هم داخل store داری، اینجا dispatch مربوط به خودش را اضافه کن.
+         * فعلاً فقط call شده که مثل کد قبلی‌ات باقی بماند.
+         */
+        logger.info("following list", followingRes?.data?.data || []);
       } catch (error) {
         logger.error("loadUserMasterData error", error);
       }
@@ -107,6 +153,10 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
         if (userData) {
           dispatch(RsetUserLogin(userData));
         }
+
+        const finalUserId = Number(userData?.user?.id || userIdFromToken);
+
+        await loadUserMasterData(finalUserId);
       } catch (error) {
         logger.error("loadCurrentUser error", error);
 
@@ -144,18 +194,18 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   }, [initializeAuth]);
 
   useEffect(() => {
-    if (!isInitializing) {
-      const inAuthGroup = segments[0] === "(auth)";
-      const isLoggedIn = Boolean(token || userId || userLoginId);
+    if (isInitializing) return;
 
-      if (!isLoggedIn && !inAuthGroup) {
-        router.replace("/login");
-        return;
-      }
+    const inAuthGroup = segments[0] === "(auth)";
+    const isLoggedIn = Boolean(token || userId || userLoginId);
 
-      if (isLoggedIn && inAuthGroup) {
-        router.replace("/(tabs)/watch");
-      }
+    if (!isLoggedIn && !inAuthGroup) {
+      router.replace("/login");
+      return;
+    }
+
+    if (isLoggedIn && inAuthGroup) {
+      router.replace("/(tabs)/watch");
     }
   }, [isInitializing, segments, token, userId, userLoginId, router]);
 
@@ -167,28 +217,74 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     loadUserMasterData(activeUserId);
   }, [userLoginId, userId, loadUserMasterData]);
 
+  /**
+   * مدیریت Socket
+   */
   useEffect(() => {
     const activeUserId = Number(userLoginId || userId);
 
-    if (!socket || !activeUserId) return;
+    if (!activeUserId) return;
 
-    dispatch(RsetSocketConfig(socket));
+    const handleConnect = () => {
+      console.log("✅ Socket connected:", socket.id);
 
-    socket.emit("register_user", activeUserId);
+      socket.emit("register_user", activeUserId);
+
+      dispatch(
+        RsetSocketConfig({
+          socketId: socket.id,
+          connected: true,
+        }),
+      );
+    };
+
+    const handleConnectError = (error: any) => {
+      console.log("❌ Socket connect_error:", error?.message || error);
+
+      dispatch(
+        RsetSocketConfig({
+          socketId: null,
+          connected: false,
+        }),
+      );
+    };
+
+    const handleDisconnect = (reason: string) => {
+      console.log("⚠️ Socket disconnected:", reason);
+
+      dispatch(
+        RsetSocketConfig({
+          socketId: null,
+          connected: false,
+        }),
+      );
+    };
 
     const handleAllUsersOnline = (data: any) => {
       dispatch(RsetGiveUserOnlines(data));
     };
 
-    socket.on("all_user_online", handleAllUsersOnline);
+    socketClient.on("connect", handleConnect);
+    socketClient.on("connect_error", handleConnectError);
+    socketClient.on("disconnect", handleDisconnect);
+    socketClient.on("all_user_online", handleAllUsersOnline);
+
+    if (!socketClient.connected) {
+      socketClient.connect();
+    }
 
     return () => {
-      socket.off("all_user_online", handleAllUsersOnline);
+      socketClient.off("connect", handleConnect);
+      socketClient.off("connect_error", handleConnectError);
+      socketClient.off("disconnect", handleDisconnect);
+      socketClient.off("all_user_online", handleAllUsersOnline);
     };
   }, [socket, userLoginId, userId, dispatch]);
 
   useEffect(() => {
     if (!receiveUserId) return;
+
+    logger.info("receiveUserId", receiveUserId);
   }, [receiveUserId]);
 
   if (isInitializing) {

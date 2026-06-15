@@ -4,13 +4,13 @@ import React, { useEffect, useMemo } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { H1 } from "tamagui";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
+import { socketClient } from "../utils/socketClient";
 
 const AppHeader = () => {
   const router = useRouter();
   const pathname: any = usePathname();
   const dispatch = useAppDispatch();
 
-  const socket = useAppSelector((state) => state.main.socketConfig);
   const currentUser = useAppSelector((state) => state.main.userLogin?.user);
   const unreadCount = useAppSelector((state) => state.main.unreadMessagesCount);
 
@@ -45,16 +45,16 @@ const AppHeader = () => {
   };
 
   useEffect(() => {
-    if (!socket || !currentUser) return;
+    if (!socketClient || !currentUser) return;
 
-    socket.on("receive_message", handleReceiveMessage);
-    socket.on("messages_read_confirmation", handleReadConfirmation);
+    socketClient?.on("receive_message", handleReceiveMessage);
+    socketClient?.on("messages_read_confirmation", handleReadConfirmation);
 
     return () => {
-      socket.off("receive_message", handleReceiveMessage);
-      socket.off("messages_read_confirmation", handleReadConfirmation);
+      socketClient?.off("receive_message", handleReceiveMessage);
+      socketClient?.off("messages_read_confirmation", handleReadConfirmation);
     };
-  }, [socket, currentUser]);
+  }, [socketClient, currentUser]);
 
   const handleBack = () => router.back();
 

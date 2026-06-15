@@ -94,7 +94,7 @@ const Gear: React.FC<any> = ({
   }, {});
 
   return (
-    <View bg="$backgroundDefault">
+    <View>
       <MainTitle showBack title="Gear" />
 
       <SoftLink

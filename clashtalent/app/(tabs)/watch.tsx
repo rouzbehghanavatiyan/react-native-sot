@@ -113,13 +113,17 @@ export default function WatchScreen() {
       <FlatList
         ListHeaderComponent={
           <>
-            <MainTitle title="Filtered" />
-            <FilteredWatch
-              skills={skills}
-              handleGetAllMatch={handleFilterChange}
-              selectFiltered={selectFiltered}
-              setSelectFiltered={setSelectFiltered}
-            />
+            {skills && (
+              <>
+                <MainTitle title="Filtered" />
+                <FilteredWatch
+                  skills={skills}
+                  handleGetAllMatch={handleFilterChange}
+                  selectFiltered={selectFiltered}
+                  setSelectFiltered={setSelectFiltered}
+                />
+              </>
+            )}
           </>
         }
         data={data}

@@ -5,6 +5,7 @@ import { usePagination } from "@/src/hook/usePagination";
 import { userAttachmentList } from "@/src/services/masterServices";
 import { useAppSelector } from "@/src/store/reduxHookType";
 import { getImageUrl } from "@/src/utils/fileHelper";
+import { socketClient } from "@/src/utils/socketClient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { FlatList, RefreshControl, SafeAreaView } from "react-native";
@@ -17,7 +18,6 @@ const Profile: React.FC = () => {
 
   const main = useAppSelector((state) => state?.main);
   const userIdWhantToShow = route.params?.userData;
-  const socket = main.socketConfig;
   const userId = main?.userLogin?.user?.id;
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
@@ -59,17 +59,17 @@ const Profile: React.FC = () => {
       }));
     };
 
-    if (socket) {
-      socket.on("add_liked_response", handleGetAddLike);
-      socket.on("remove_liked_response", handleGetRemoveLike);
+    if (socketClient?.on) {
+      socketClient?.on("add_liked_response", handleGetAddLike);
+      socketClient?.on("remove_liked_response", handleGetRemoveLike);
     }
     return () => {
-      if (socket) {
-        socket.off("add_liked_response", handleGetAddLike);
-        socket.off("remove_liked_response", handleGetRemoveLike);
+      if (socketClient) {
+        socketClient?.off("add_liked_response", handleGetAddLike);
+        socketClient?.off("remove_liked_response", handleGetRemoveLike);
       }
     };
-  }, [socket]);
+  }, [socketClient]);
 
   useEffect(() => {
     const score = userIdWhantToShow?.score || main?.userLogin?.score || 0;
