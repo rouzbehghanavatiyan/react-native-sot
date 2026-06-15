@@ -164,8 +164,9 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
 
         dispatch(
           RsetUserLogin({
-            token: null,
-            userId: null,
+            ...userData,
+            token: savedToken,
+            userId: userIdFromToken,
           }),
         );
 
