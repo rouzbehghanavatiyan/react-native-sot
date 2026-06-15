@@ -114,14 +114,15 @@ export const uploadFullProcessThunk = createAsyncThunk(
         throw new Error("Error in recording movie attachment!");
       }
 
-      const postInvite = {
+      const requestData = {
         parentId: null,
         userId: userId || null,
         movieId: movieId || null,
         status: 0,
       };
 
-      const inviteRes = await addInvite(postInvite);
+      logger.info("postInvite postInvite postInvite", requestData);
+      const inviteRes = await addInvite(requestData);
 
       logger.info("invite response", inviteRes);
 

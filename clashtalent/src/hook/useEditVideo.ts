@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
+import { socketClient } from "../utils/socketClient";
 
 export const useEditVideo = ({
   showEditMovie,
@@ -32,7 +33,6 @@ export const useEditVideo = ({
   } = useAppSelector((state) => state.video);
   const hasPrepared = useRef(false);
   const main = useAppSelector((state) => state.main);
-  const socket = main?.socketConfig;
   const userIdLogin = main?.userLogin?.user?.id;
   const gearId = main?.createTalent?.gear?.id;
 
@@ -55,11 +55,19 @@ export const useEditVideo = ({
         gearId,
         mode,
         allFormData,
-        socket,
+        socketClient,
         movieMeta: movieData,
       }),
     );
-  }, [dispatch, userIdLogin, gearId, mode, allFormData, socket, movieData]);
+  }, [
+    dispatch,
+    userIdLogin,
+    gearId,
+    mode,
+    allFormData,
+    socketClient,
+    movieData,
+  ]);
 
   const handleBack = useCallback(() => {
     if (currentStep > 1) {
@@ -89,28 +97,28 @@ export const useEditVideo = ({
   };
 
   useEffect(() => {
-    if (!socket || !showEditMovie) return;
+    if (!socketClient || !showEditMovie) return;
 
     const handleInviteResponse = (data: any) => {
-      console.log("Socket response received:", data);
+      console.log("socketClient response received:", data);
       setShowEditMovie(false);
       dispatch(resetVideoState()); // اول استیت پاک شود
       navigation.navigate("Profile"); // تغییر سینتکس نویگیشن
     };
 
-    socket.on("add_invite_offline_response", handleInviteResponse);
+    socketClient?.on("add_invite_offline_response", handleInviteResponse);
 
     return () => {
-      socket.off("add_invite_offline_response", handleInviteResponse);
+      socketClient?.off("add_invite_offline_response", handleInviteResponse);
     };
-  }, [socket, showEditMovie, navigation, setShowEditMovie, dispatch]);
+  }, [socketClient, showEditMovie, navigation, setShowEditMovie, dispatch]);
 
   useEffect(() => {
-    if (uploadStatus === "success" && mode?.typeMode === 3 && !socket) {
+    if (uploadStatus === "success" && mode?.typeMode === 3 && !socketClient) {
       setShowEditMovie(false);
       navigation.navigate("Profile"); // تغییر سینتکس نویگیشن
     }
-  }, [uploadStatus, mode, socket, navigation, setShowEditMovie]);
+  }, [uploadStatus, mode, socketClient, navigation, setShowEditMovie]);
 
   return {
     videoSrc,
