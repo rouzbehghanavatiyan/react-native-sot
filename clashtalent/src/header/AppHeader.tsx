@@ -116,7 +116,7 @@ export default AppHeader;
 
 const styles = StyleSheet.create({
   header: {
-    height: 55,
+    height: 40,
     backgroundColor: "#fff",
     paddingHorizontal: 16,
     flexDirection: "row",
