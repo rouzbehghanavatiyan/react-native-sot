@@ -1,9 +1,10 @@
 import { addFollower, removeFollower } from "@/src/services/masterServices";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable } from "react-native";
-import { Popover, Separator, Text, View, XStack } from "tamagui";
+import { Modal, Pressable, StyleSheet } from "react-native";
+import { Separator, Text, View, XStack } from "tamagui";
 import { getImageUrl } from "../utils/fileHelper";
 import Follows from "./Follows";
 import ImageRank from "./ImageRank";
@@ -13,9 +14,7 @@ interface OptionTopProps {
   positionVideo: number;
   openDropdowns: { [key: number]: boolean };
   score: any;
-  setOpenDropdowns: React.Dispatch<
-    React.SetStateAction<{ [key: number]: boolean }>
-  >;
+  setOpenDropdowns: any;
   toggleDropdown: (position: string) => void;
   dropdownItems: (video: any) => any[];
   userIdLogin: string | null;
@@ -30,8 +29,10 @@ const OptionTop: React.FC<OptionTopProps> = ({
   userIdLogin,
   main,
 }) => {
+  const router = useRouter();
   const [localIsFollowed, setLocalIsFollowed] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const currentUserId = main?.userLogin?.user?.id;
 
   const profile =
@@ -82,10 +83,8 @@ const OptionTop: React.FC<OptionTopProps> = ({
 
       if (localIsFollowed) {
         await removeFollower(postData);
-        console.log("Unfollow successful");
       } else {
         await addFollower(postData);
-        console.log("Follow successful");
       }
 
       setLocalIsFollowed(newFollowStatus);
@@ -97,15 +96,59 @@ const OptionTop: React.FC<OptionTopProps> = ({
     }
   };
 
-  const getDropdownItems = () => {
+  // ----- ارسال پیام -----
+  const handleSendMessage = () => {
+    setMenuOpen(false);
+    if (!userInfo?.id) return;
+
+    router.push({
+      pathname: "/chat/[userId]", // مسیر صفحه چت خودتون رو اینجا قرار بدید
+      params: {
+        userId: userInfo.id,
+        userName: userInfo?.userName || "",
+        profile: profile || "",
+      },
+    });
+  };
+
+  // ----- گزارش کاربر -----
+  const handleReport = () => {
+    setMenuOpen(false);
+    if (!userInfo?.id) return;
+
+    // اینجا می‌تونید مودال ریپورت رو باز کنید یا API ریپورت رو صدا بزنید
+    console.log("Report user:", userInfo.id);
+  };
+
+  // ----- ترکیب آیتم‌های ثابت با آیتم‌های دینامیک قبلی -----
+  const getMenuItems = () => {
+    let items: any[] = [];
+
     try {
-      return dropdownItems && typeof dropdownItems === "function"
-        ? dropdownItems(video)
-        : [];
+      items =
+        dropdownItems && typeof dropdownItems === "function"
+          ? dropdownItems(video)
+          : [];
     } catch (error) {
       console.error("Error getting dropdown items:", error);
-      return [];
     }
+
+    const customItems = [
+      {
+        label: "Send Message",
+        icon: "chat",
+        onClick: handleSendMessage,
+      },
+      {
+        label: "Report",
+        icon: "flag",
+        onClick: handleReport,
+      },
+    ];
+
+    return items.length > 0
+      ? [...customItems, { divider: true }, ...items]
+      : customItems;
   };
 
   return (
@@ -143,67 +186,76 @@ const OptionTop: React.FC<OptionTopProps> = ({
           </View>
           <View flex={1} alignItems="flex-end">
             {checkMyVideo && (
-              <Popover size="$5" allowFlip placement="bottom-end">
-                <Popover.Trigger asChild>
-                  <Pressable hitSlop={10} style={{ padding: 4 }}>
-                    <MaterialIcons name="more-vert" size={28} color="white" />
-                  </Pressable>
-                </Popover.Trigger>
-
-                <Popover.Content
-                  borderWidth={1}
-                  borderColor="$borderColor"
-                  enterStyle={{ y: -10, opacity: 0 }}
-                  exitStyle={{ y: -10, opacity: 0 }}
-                  elevate
-                  // animation={[
-                  //   "quick",
-                  //   {
-                  //     opacity: {
-                  //       overshootClamping: true,
-                  //     },
-                  //   },
-                  // ]}
+              <>
+                <Pressable
+                  hitSlop={10}
+                  style={{ padding: 4 }}
+                  onPress={() => setMenuOpen(true)}
                 >
-                  <Popover.Arrow borderWidth={1} borderColor="$borderColor" />
-                  <View w={190} p="$2">
-                    {getDropdownItems().map((item: any, index: number) => {
-                      if (item.divider) {
-                        return (
-                          <Separator
-                            key={`divider-${index}`}
-                            my="$2"
-                            w="100%"
-                          />
-                        );
-                      }
-                      return (
-                        <View
-                          key={index}
-                          onPress={item.onClick}
-                          cursor="pointer"
-                          p="$2"
-                          pressStyle={{ backgroundColor: "$backgroundHover" }}
-                          borderRadius="$2"
-                        >
-                          <XStack gap="$3" alignItems="center" w="100%">
-                            {item.icon && (
-                              <MaterialIcons
-                                name={item.icon}
-                                size={20}
-                                color="#4b5563"
+                  <MaterialIcons name="more-vert" size={28} color="white" />
+                </Pressable>
+
+                <Modal
+                  visible={menuOpen}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setMenuOpen(false)}
+                >
+                  <Pressable
+                    style={styles.backdrop}
+                    onPress={() => setMenuOpen(false)}
+                  >
+                    <View style={styles.menuContainer}>
+                      <View
+                        backgroundColor="white"
+                        borderRadius={10}
+                        borderWidth={1}
+                        borderColor="#E5E7EB"
+                        w={190}
+                        p="$2"
+                        elevationAndroid={4}
+                      >
+                        {getMenuItems().map((item: any, index: number) => {
+                          if (item.divider) {
+                            return (
+                              <Separator
+                                key={`divider-${index}`}
+                                my="$2"
+                                w="100%"
                               />
-                            )}
-                            <Text fontSize="$4" color="$textPrimary">
-                              {item.label}
-                            </Text>
-                          </XStack>
-                        </View>
-                      );
-                    })}
-                  </View>
-                </Popover.Content>
-              </Popover>
+                            );
+                          }
+                          return (
+                            <View
+                              key={index}
+                              onPress={item.onClick}
+                              cursor="pointer"
+                              p="$2"
+                              pressStyle={{
+                                backgroundColor: "$backgroundHover",
+                              }}
+                              borderRadius="$2"
+                            >
+                              <XStack gap="$3" alignItems="center" w="100%">
+                                {item.icon && (
+                                  <MaterialIcons
+                                    name={item.icon}
+                                    size={20}
+                                    color="#4b5563"
+                                  />
+                                )}
+                                <Text fontSize="$4" color="$textPrimary">
+                                  {item.label}
+                                </Text>
+                              </XStack>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </Pressable>
+                </Modal>
+              </>
             )}
           </View>
         </XStack>
@@ -211,5 +263,17 @@ const OptionTop: React.FC<OptionTopProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.15)",
+  },
+  menuContainer: {
+    position: "absolute",
+    top: 50,
+    right: 12,
+  },
+});
 
 export default OptionTop;

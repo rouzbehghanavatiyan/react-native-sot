@@ -1,13 +1,13 @@
 import { store } from "@/src/store/store";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { PortalProvider as GorhomPortalProvider } from "@gorhom/portal";
-import { TamaguiProvider, View } from "@tamagui/core";
 import { useFonts } from "expo-font";
 import { Slot } from "expo-router";
 import { ActivityIndicator } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Provider } from "react-redux";
+import { PortalProvider, TamaguiProvider, View } from "tamagui";
 
 import tamaguiConfig from "../tamagui.config";
 import { AppInitializer } from "./AppInitializer";
@@ -22,23 +22,32 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-        <GorhomPortalProvider>
-          <BottomSheetModalProvider>
-            <SafeAreaProvider>
-              <Provider store={store}>
-                <AppInitializer>
-                  {fontsLoaded ? (
-                    <Slot />
-                  ) : (
-                    <View flex={1} justifyContent="center" alignItems="center">
-                      <ActivityIndicator />
-                    </View>
-                  )}
-                </AppInitializer>
-              </Provider>
-            </SafeAreaProvider>
-          </BottomSheetModalProvider>
-        </GorhomPortalProvider>
+        {/* PortalProvider مخصوص تامagui؛ shouldAddRootHost باعث می‌شه
+            یک Portal.Host در ریشه‌ی اپ ساخته شود که Popover/Tooltip/Dialog
+            و موارد مشابه بتوانند درون آن رندر شوند */}
+        <PortalProvider shouldAddRootHost>
+          <GorhomPortalProvider>
+            <BottomSheetModalProvider>
+              <SafeAreaProvider>
+                <Provider store={store}>
+                  <AppInitializer>
+                    {fontsLoaded ? (
+                      <Slot />
+                    ) : (
+                      <View
+                        flex={1}
+                        justifyContent="center"
+                        alignItems="center"
+                      >
+                        <ActivityIndicator />
+                      </View>
+                    )}
+                  </AppInitializer>
+                </Provider>
+              </SafeAreaProvider>
+            </BottomSheetModalProvider>
+          </GorhomPortalProvider>
+        </PortalProvider>
       </TamaguiProvider>
     </GestureHandlerRootView>
   );
