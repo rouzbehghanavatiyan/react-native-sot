@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -13,13 +13,12 @@ interface PropType {
 const MainTitle: React.FC<PropType> = ({
   title,
   handleBack,
-  showBack,
+  showBack = true,
   rightComponent,
 }) => {
-  const navigation = useNavigation();
+  const router = useRouter();
 
-  const onBack =
-    handleBack ?? (showBack ? () => navigation.goBack() : undefined);
+  const onBack = handleBack ?? (showBack ? () => router.back() : undefined);
 
   return (
     <View style={styles.container}>
@@ -30,9 +29,11 @@ const MainTitle: React.FC<PropType> = ({
           </TouchableOpacity>
         )}
       </View>
+
       <View style={styles.center}>
         <Text style={styles.title}>{title}</Text>
       </View>
+
       <View style={styles.side}>{rightComponent}</View>
     </View>
   );

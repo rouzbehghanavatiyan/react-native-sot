@@ -88,11 +88,10 @@ const AppHeader = () => {
             <Ionicons name="arrow-back" size={24} color="#10153D" />
           </TouchableOpacity>
         )} */}
-
         <H1
           style={styles.logo}
           fontFamily="$logo"
-          // mt="$4"  <-- این را حذف کن، چون متن را از بالا هل می‌دهد پایین
+          // mt="$4"
           color="$textPrimary"
           size="$6"
         >
@@ -117,19 +116,20 @@ export default AppHeader;
 
 const styles = StyleSheet.create({
   header: {
-    height: 45,
-    backgroundColor: "#fafafa",
+    height: 40,
+    backgroundColor: "#fff",
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-
-    shadowColor: "#222222",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 1.6,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2,
+    zIndex: 10,
   },
+
   leftSection: {
     flexDirection: "row",
     alignItems: "center",

@@ -4,6 +4,7 @@ import {
   followingList,
   profileAttachment,
 } from "@/src/services/masterServices";
+
 import {
   RsetAllFollowerList,
   RsetCategory,
@@ -12,21 +13,24 @@ import {
   RsetUserId,
   RsetUserLogin,
 } from "@/src/slices/main";
+
 import { logger } from "@/src/utils/logger";
 import { socketClient } from "@/src/utils/socketClient";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View } from "@tamagui/core";
+
 import {
   useLocalSearchParams,
   usePathname,
   useRouter,
   useSegments,
 } from "expo-router";
+
 import { jwtDecode } from "jwt-decode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { io } from "socket.io-client";
 
 type JwtPayload = {
   [key: string]: any;
@@ -39,8 +43,6 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const params = useLocalSearchParams();
 
-  const SOCKET_URL = "http://192.168.133.157:4005";
-
   const main = useSelector((state: any) => state.main);
 
   const token = main?.userLogin?.token || main?.token || null;
@@ -48,37 +50,6 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   const userLoginId = main?.userLogin?.user?.id || main?.userLogin?.userId;
 
   const [isInitializing, setIsInitializing] = useState(true);
-
-  const socket = useMemo(() => {
-    return io(SOCKET_URL, {
-      transports: ["websocket"],
-      autoConnect: false,
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      timeout: 20000,
-    });
-  }, []);
-
-  const getUserIdFromToken = useCallback((savedToken: string) => {
-    try {
-      const decoded: JwtPayload = jwtDecode(savedToken);
-
-      return (
-        decoded?.userId ||
-        decoded?.UserId ||
-        decoded?.nameid ||
-        decoded?.sub ||
-        decoded?.[
-          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-        ] ||
-        null
-      );
-    } catch (error) {
-      logger.error("jwtDecode error", error);
-      return null;
-    }
-  }, []);
 
   const isChat = pathname?.includes("chat");
 
@@ -94,9 +65,30 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     return Number(rawUser) || null;
   }, [isChat, params?.user]);
 
+  const getUserIdFromToken = useCallback((savedToken: string) => {
+    try {
+      const decoded: JwtPayload = jwtDecode(savedToken);
+
+      return (
+        decoded?.userId ||
+        decoded?.UserId ||
+        decoded?.id ||
+        decoded?.nameid ||
+        decoded?.sub ||
+        decoded?.[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+        ] ||
+        null
+      );
+    } catch (error) {
+      logger.error("jwtDecode error", error);
+      return null;
+    }
+  }, []);
+
   const loadUserMasterData = useCallback(
     async (targetUserId: number) => {
-      if (!targetUserId) return;
+      if (!targetUserId || isNaN(targetUserId)) return;
 
       try {
         const [cat, followingRes, followerRes] = await Promise.all([
@@ -108,10 +100,6 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
         dispatch(RsetCategory(cat?.data?.data || []));
         dispatch(RsetAllFollowerList(followerRes?.data?.data || []));
 
-        /**
-         * اگر following هم داخل store داری، اینجا dispatch مربوط به خودش را اضافه کن.
-         * فعلاً فقط call شده که مثل کد قبلی‌ات باقی بماند.
-         */
         logger.info("following list", followingRes?.data?.data || []);
       } catch (error) {
         logger.error("loadUserMasterData error", error);
@@ -125,16 +113,9 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
       try {
         const userIdFromToken = Number(getUserIdFromToken(savedToken));
 
-        if (!userIdFromToken) {
+        if (!userIdFromToken || isNaN(userIdFromToken)) {
           throw new Error("Invalid user id from token");
         }
-
-        dispatch(
-          RsetUserLogin({
-            token: savedToken,
-            userId: userIdFromToken,
-          }),
-        );
 
         dispatch(RsetUserId(userIdFromToken));
 
@@ -145,6 +126,13 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
           dispatch(
             RsetUserLogin({
               ...userData,
+              token: savedToken,
+              userId: userData?.user?.id || userIdFromToken,
+            }),
+          );
+        } else {
+          dispatch(
+            RsetUserLogin({
               token: savedToken,
               userId: userIdFromToken,
             }),
@@ -159,13 +147,7 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
 
         await AsyncStorage.removeItem("token");
 
-        dispatch(
-          RsetUserLogin({
-            token: null,
-            userId: null,
-          }),
-        );
-
+        dispatch(RsetUserLogin(null));
         dispatch(RsetUserId(null));
       }
     },
@@ -209,27 +191,24 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const activeUserId = Number(userLoginId || userId);
 
-    if (!activeUserId) return;
+    if (!activeUserId || isNaN(activeUserId)) return;
 
     loadUserMasterData(activeUserId);
   }, [userLoginId, userId, loadUserMasterData]);
 
-  /**
-   * مدیریت Socket
-   */
   useEffect(() => {
     const activeUserId = Number(userLoginId || userId);
 
-    if (!activeUserId) return;
+    if (!activeUserId || isNaN(activeUserId)) return;
 
     const handleConnect = () => {
-      console.log("✅ Socket connected:", socket.id);
+      console.log("✅ Socket connected:", socketClient.id);
 
-      socket.emit("register_user", activeUserId);
+      socketClient.emit("register_user", activeUserId);
 
       dispatch(
         RsetSocketConfig({
-          socketId: socket.id,
+          socketId: socketClient.id,
           connected: true,
         }),
       );
@@ -268,6 +247,15 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
 
     if (!socketClient.connected) {
       socketClient.connect();
+    } else {
+      socketClient.emit("register_user", activeUserId);
+
+      dispatch(
+        RsetSocketConfig({
+          socketId: socketClient.id,
+          connected: true,
+        }),
+      );
     }
 
     return () => {
@@ -276,7 +264,7 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
       socketClient.off("disconnect", handleDisconnect);
       socketClient.off("all_user_online", handleAllUsersOnline);
     };
-  }, [socket, userLoginId, userId, dispatch]);
+  }, [userLoginId, userId, dispatch]);
 
   useEffect(() => {
     if (!receiveUserId) return;

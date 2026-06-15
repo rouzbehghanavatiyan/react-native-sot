@@ -30,7 +30,6 @@ export default function VideoSection({
   const main = useAppSelector((state) => state.main);
   const userIdLogin = main?.userLogin?.user?.id;
   const socket = main?.socketConfig;
-
   const videoUrl =
     positionVideo === 0
       ? getImageUrl(video?.attachmentInserted)
