@@ -5,7 +5,6 @@ import { useMessageModal } from "@/src/hook/useMessageModal";
 import { registerUser } from "@/src/services/masterServices";
 import { validateForm } from "@/src/utils/errorValidation";
 import { FormErrors, FormValues } from "@/src/utils/GlobalType";
-import { logger } from "@/src/utils/logger";
 import { Eye, EyeOff } from "@tamagui/lucide-icons";
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -41,7 +40,6 @@ export default function SignUpScreen() {
 
     try {
       setIsLoading(true);
-
       const postData = {
         UserName: inputs.username,
         Password: inputs.password,
@@ -49,14 +47,9 @@ export default function SignUpScreen() {
       };
 
       const res: any = await registerUser(postData);
-      logger.info("res", postData);
       const { status, message } = res?.data || {};
-
       if (status === 0 || status === 2) {
-        message.show(
-          "Dear user, please check your email to verify your account.",
-        );
-
+        alert("Dear user, please check your email to verify your account.");
         router.replace("/");
       } else {
         setErrors((prev) => ({
@@ -70,8 +63,7 @@ export default function SignUpScreen() {
         ...prev,
         general: "An error occurred. Please try again later.",
       }));
-
-      message.show("An error occurred. Please try again later.");
+      alert("An error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
     }

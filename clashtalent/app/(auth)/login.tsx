@@ -2,8 +2,20 @@ import Logo from "@/src/assets/images/logocircle.png";
 import BaseButton from "@/src/components/BaseButtom";
 import BaseInput from "@/src/components/BaseInput";
 import { login } from "@/src/services/authService";
+import {
+  categoryList,
+  followerList,
+  followingList,
+  profileAttachment,
+} from "@/src/services/masterServices";
 import { saveToken } from "@/src/services/tokenServices";
-import { RsetUserId, RsetUserLogin } from "@/src/slices/main";
+import {
+  RsetAllFollowerList,
+  RsetAllFollowingList,
+  RsetCategory,
+  RsetUserId,
+  RsetUserLogin,
+} from "@/src/slices/main";
 import { useAppDispatch } from "@/src/store/reduxHookType";
 import { validateFormLogin } from "@/src/utils/errorValidation";
 import { FormErrors, FormValues } from "@/src/utils/GlobalType";
@@ -48,12 +60,35 @@ const LoginScreen: React.FC<any> = () => {
       });
 
       if (response?.status === 0) {
-        await saveToken(response?.data?.token);
         const token = response?.data?.token;
+        await saveToken(token);
+
         const decoded: any = jwtDecode(token);
-        const userId: any = Object.values(decoded)?.[1];
+        const userId: any = Number(Object.values(decoded)?.[1]);
+
+        // ✅ اول dispatch کن
         dispatch(RsetUserLogin({ token, userId }));
         dispatch(RsetUserId(userId));
+
+        // ✅ بعد داده‌ها را لود کن — قبل از navigate
+        await Promise.all([
+          categoryList().then((res) =>
+            dispatch(RsetCategory(res?.data?.data || [])),
+          ),
+          followingList(userId).then((res) =>
+            dispatch(RsetAllFollowingList(res?.data?.data || [])),
+          ),
+          followerList(userId).then((res) =>
+            dispatch(RsetAllFollowerList(res?.data?.data || [])),
+          ),
+          profileAttachment(userId).then((res) => {
+            if (res?.data?.data) {
+              dispatch(RsetUserLogin({ ...res.data.data, token, userId }));
+            }
+          }),
+        ]);
+
+        // ✅ بعد از لود داده‌ها navigate کن
         router.replace("/(tabs)/watch");
       }
     } catch (error: any) {

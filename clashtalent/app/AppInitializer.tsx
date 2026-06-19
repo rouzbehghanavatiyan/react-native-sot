@@ -188,13 +188,13 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     }
   }, [isInitializing, segments, token, userId, userLoginId, router]);
 
-  useEffect(() => {
-    const activeUserId = Number(userLoginId || userId);
+  // useEffect(() => {
+  //   const activeUserId = Number(userLoginId || userId);
 
-    if (!activeUserId || isNaN(activeUserId)) return;
+  //   if (!activeUserId || isNaN(activeUserId)) return;
 
-    loadUserMasterData(activeUserId);
-  }, [userLoginId, userId, loadUserMasterData]);
+  //   loadUserMasterData(activeUserId);
+  // }, [userLoginId, userId, loadUserMasterData]);
 
   useEffect(() => {
     const activeUserId = Number(userLoginId || userId);

@@ -186,9 +186,8 @@ const ImageRank: React.FC<ProfileWithRankProps> = ({
             ? userInfo?.scoreMatched
             : userInfo?.score,
     };
-
     // @ts-ignore - navigation types may vary
-    navigation.navigate("Profile", {
+    navigation.navigate("profile", {
       userData,
     });
   };

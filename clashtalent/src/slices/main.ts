@@ -105,6 +105,9 @@ const mainSlice = createSlice({
     setHomeData: (state, action: PayloadAction<any[]>) => {
       state.homeMatch.data = action.payload;
     },
+    RsetFollowerList: (state, action: PayloadAction<any[]>) => {
+      state.followerList.data = action.payload;
+    },
     RsetShowWatch: (state, action) => {
       state.showWatchMatch.data = action.payload;
     },

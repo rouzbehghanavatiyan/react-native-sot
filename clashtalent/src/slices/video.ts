@@ -8,6 +8,7 @@ import {
   removeInvite,
 } from "../services/masterServices";
 import { logger } from "../utils/logger";
+import { socketClient } from "../utils/socketClient";
 import { RsetShowTimerButtn } from "./main";
 import { VideoState } from "./type";
 
@@ -54,149 +55,88 @@ export const removeInviteThunk = createAsyncThunk(
 export const uploadFullProcessThunk = createAsyncThunk(
   "video/uploadFullProcess",
   async (
-    { userId, gearId, mode, allFormData, socket, movieMeta, router }: any,
+    { userId, gearId, mode, allFormData, movieMeta, router }: any,
     { rejectWithValue, dispatch },
   ) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     try {
-      const storedGearId = await AsyncStorage.getItem("gearId");
+      const gearIdStorage = await AsyncStorage.getItem("gearId");
 
       const postData = {
         userId,
-        description: movieMeta?.desc ?? "",
-        title: movieMeta?.title ?? "",
-        subSubCategoryId: gearId || storedGearId || null,
-        modeId: mode?.typeMode || null,
+        description: allFormData?.description || movieMeta?.desc || "",
+        title: allFormData?.title || movieMeta?.title || "",
+        subSubCategoryId:
+          allFormData?.subSubCategoryId || gearId || gearIdStorage,
+        modeId: 3,
       };
 
       const movieRes = await addMovie(postData);
-      const movieDataRes = movieRes?.data;
-      const movieId = movieRes?.data?.data?.id;
+      const movieDataRes = movieRes?.data?.data;
 
-      logger.info("addMovie response", movieRes);
-
-      if (movieDataRes?.status !== 0) {
+      if (movieRes?.data?.status !== 0) {
         throw new Error("Error in recording initial movie information");
       }
 
-      if (!movieId) {
-        throw new Error("Movie id is missing");
-      }
-
       const formData = new FormData();
-
-      if (allFormData?.video) {
-        formData.append("formFile", {
-          uri: allFormData.video.uri,
-          name: allFormData.video.name || "video.mp4",
-          type: allFormData.video.type || "video/mp4",
-        } as any);
-      }
-
-      if (allFormData?.imageCover) {
-        formData.append("formFile", {
-          uri: allFormData.imageCover.uri,
-          name: allFormData.imageCover.name || "cover.jpg",
-          type: allFormData.imageCover.type || "image/jpeg",
-        } as any);
-      }
-
-      formData.append("attachmentId", String(movieId));
+      formData.append("formFile", allFormData?.video);
+      formData.append("formFile", allFormData?.imageCover);
+      formData.append("attachmentId", movieDataRes?.id);
       formData.append("attachmentType", "mo");
       formData.append("attachmentName", "movies");
 
-      logger.info("attachment formData", formData);
-
       const attachRes = await addAttachment(formData);
-
       if (attachRes?.data?.status !== 0) {
-        throw new Error("Error in recording movie attachment!");
+        throw new Error("Error uploading attachments");
       }
 
       const requestData = {
         parentId: null,
-        userId: userId || null,
-        movieId: movieId || null,
+        userId: Number(userId),
+        movieId: Number(movieDataRes?.id),
         status: 0,
       };
 
-      logger.info("postInvite postInvite postInvite", requestData);
       const inviteRes = await addInvite(requestData);
-
-      logger.info("invite response", inviteRes);
-
-      if (inviteRes?.data?.status !== 0) {
-        throw new Error("Error in creating invite");
-      }
-
       const inviteData = inviteRes?.data?.data;
-
+      logger.info("inviteRes inviteRes inviteRes", inviteRes);
       dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(true));
-
-      if (!socket || !socket.connected) {
-        timeoutId = setTimeout(() => {
-          dispatch(RsetShowTimerButtn(false));
-          Alert.alert("Socket is not connected. Please try again.");
-        }, 60000);
-
-        return {
-          modeType: mode?.typeMode,
-          movieData: movieDataRes,
-          inviteData,
-        };
-      }
-
-      /**
-       * ارسال socket با ACK
-       */
-      const socketResult: any = await new Promise((resolve, reject) => {
-        socket
-          .timeout(20000)
-          .emit("add_invite_offline", inviteData, (err: any, response: any) => {
-            if (err) {
-              reject(new Error("Socket timeout"));
-              return;
-            }
-
-            resolve(response);
-          });
+      socketClient.emit("register_user", userId);
+      socketClient.emit("add_invite_offline", {
+        ...inviteData,
+        senderUserId: userId,
+      });
+      socketClient.once("receive_invite", (matchData: any) => {
+        console.log("✅✅✅✅✅✅✅ Match found!", timeoutId, matchData);
+        if (timeoutId) clearTimeout(timeoutId);
+        dispatch(RsetShowTimerButtn(false));
+        router.replace("/(tabs)/profile");
       });
 
-      logger.info("add_invite_offline socketResult", socketResult);
-
-      if (socketResult?.status !== 0) {
-        throw new Error(socketResult?.message || "Socket invite failed");
-      }
-
-      /**
-       * اگر socket موفق بود، تایمر را خاموش کن
-       */
-      if (timeoutId) clearTimeout(timeoutId);
-
-      dispatch(RsetShowTimerButtn(false));
-
-      /**
-       * Redirect به profile بعد از موفقیت socket
-       */
-      if (router) {
-        router.replace("/(tabs)/profile");
-      }
+      timeoutId = setTimeout(() => {
+        socketClient.off("receive_invite");
+        dispatch(RsetShowTimerButtn(false));
+        Alert.alert(
+          "No Match Found",
+          "Unfortunately, no tournament match was found.",
+        );
+        router.replace("/(tabs)/watch");
+      }, 120000);
 
       return {
         modeType: mode?.typeMode,
         movieData: movieDataRes,
         inviteData,
-        socketResult,
       };
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId);
-
       dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(false));
 
-      Alert.alert(error?.message || "Upload failed");
+      console.log("❌ Upload error:", error);
+      Alert.alert("Error", error?.message || "Upload failed");
 
       return rejectWithValue(error.message || "Upload failed");
     }

@@ -12,6 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
 import { socketClient } from "../utils/socketClient";
+import { useRouter } from "expo-router";
 
 export const useEditVideo = ({
   showEditMovie,
@@ -22,7 +23,7 @@ export const useEditVideo = ({
 }: any) => {
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
-
+  const router = useRouter();
   const {
     videoSrc,
     isLoading,
@@ -55,6 +56,7 @@ export const useEditVideo = ({
         gearId,
         mode,
         allFormData,
+        router,
         socketClient,
         movieMeta: movieData,
       }),

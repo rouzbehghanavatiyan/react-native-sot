@@ -50,6 +50,9 @@ const OptionTop: React.FC<OptionTopProps> = ({
   const checkMyVideo =
     userInfo?.id && currentUserId ? userInfo.id !== currentUserId : false;
 
+  const userScore =
+    positionVideo === 0 ? video?.scoreInserted : video?.scoreMatched;
+
   useEffect(() => {
     const getInitialFollowStatus = () => {
       try {
@@ -96,16 +99,15 @@ const OptionTop: React.FC<OptionTopProps> = ({
     }
   };
 
-  // ----- ارسال پیام -----
   const handleSendMessage = () => {
     setMenuOpen(false);
     if (!userInfo?.id) return;
-
     router.push({
-      pathname: "/chat/[userId]", // مسیر صفحه چت خودتون رو اینجا قرار بدید
+      pathname: `/chat/${userInfo.id}`,
       params: {
         userId: userInfo.id,
         userName: userInfo?.userName || "",
+        score: userScore || "",
         profile: profile || "",
       },
     });
