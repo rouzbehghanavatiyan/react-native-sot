@@ -1,5 +1,6 @@
 import MultiSlider from "@ptomasroos/react-native-multi-slider";
 import { AVPlaybackStatus, ResizeMode, Video } from "expo-av";
+import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import { Dimensions, Pressable, StyleSheet } from "react-native";
 import { Text, View, XStack } from "tamagui";
@@ -26,7 +27,7 @@ const VideoPreviewStep: React.FC<any> = ({
   videoSrc,
   movieData,
   onMovieDataChange,
-  onCancel,
+  // onCancel,
   handleNextStep,
 }) => {
   const videoRef = useRef<Video>(null);
@@ -38,7 +39,7 @@ const VideoPreviewStep: React.FC<any> = ({
     width: SCREEN_WIDTH - 32,
     height: 300,
   });
-
+  const router = useRouter();
   const MAX_DURATION = 60;
 
   const handleSliderChange = (values: number[]) => {
@@ -209,7 +210,7 @@ const VideoPreviewStep: React.FC<any> = ({
             size="$3"
             bg="transparent"
             chromeless
-            onPress={onCancel}
+            onPress={() => router.back()}
           >
             Cancel
           </BaseButton>

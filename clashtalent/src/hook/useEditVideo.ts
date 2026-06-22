@@ -9,10 +9,10 @@ import {
   uploadFullProcessThunk,
 } from "@/src/slices/video";
 import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../store/reduxHookType";
 import { socketClient } from "../utils/socketClient";
-import { useRouter } from "expo-router";
 
 export const useEditVideo = ({
   showEditMovie,
@@ -104,8 +104,8 @@ export const useEditVideo = ({
     const handleInviteResponse = (data: any) => {
       console.log("socketClient response received:", data);
       setShowEditMovie(false);
-      dispatch(resetVideoState()); // اول استیت پاک شود
-      navigation.navigate("Profile"); // تغییر سینتکس نویگیشن
+      dispatch(resetVideoState());
+      router.push("profile");
     };
 
     socketClient?.on("add_invite_offline_response", handleInviteResponse);
@@ -118,7 +118,7 @@ export const useEditVideo = ({
   useEffect(() => {
     if (uploadStatus === "success" && mode?.typeMode === 3 && !socketClient) {
       setShowEditMovie(false);
-      navigation.navigate("Profile"); // تغییر سینتکس نویگیشن
+      router.push("profile");
     }
   }, [uploadStatus, mode, socketClient, navigation, setShowEditMovie]);
 

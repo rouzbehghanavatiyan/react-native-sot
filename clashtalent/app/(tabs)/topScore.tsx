@@ -1,15 +1,11 @@
 import ImageRank from "@/src/components/ImageRank";
+import MainTitle from "@/src/components/MainTitle";
+import TopScoreItem from "@/src/components/TopScoreItem";
 import { topScoreList } from "@/src/services/masterServices";
-import { getImageUrl } from "@/src/utils/fileHelper";
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { Text, XStack, YStack } from "tamagui";
 
 interface Category {
   id: string;
@@ -63,76 +59,52 @@ export default function TopScoreScreen() {
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.mainTitle}>News</Text> 
+      <MainTitle title="Notification" showBack={false} />
 
-      <View style={styles.lastMatchCard}>
-        <Text style={styles.lastMatchText}>Last match:</Text>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <YStack>
+          <XStack
+            ai="center"
+            bg="$backgroundPaper"
+            px="$3"
+            borderColor="$divider"
+            gap="$3"
+          >
+            <ImageRank userName="Jhan so" />
+            <YStack f={1}>
+              <Text fontSize="$2" color="$textSecondary">
+                2 minutes ago
+              </Text>
+            </YStack>
+            <YStack px="$3" py="$1" br="$10" bg="$errorMain">
+              <Text fontSize="$3" color="white" fontWeight="700">
+                Loss
+              </Text>
+            </YStack>
+          </XStack>
+          <XStack
+            ai="center"
+            bg="$backgroundPaper"
+            px="$3"
+            borderColor="$divider"
+            gap="$3"
+          >
+            <ImageRank userName="Jhan so" />
+            <YStack f={1}>
+              <Text fontSize="$2" color="$textSecondary">
+                2 minutes ago
+              </Text>
+            </YStack>
+            <YStack px="$3" py="$1" br="$10" bg="$errorMain">
+              <Text fontSize="$3" color="white" fontWeight="700">
+                Loss
+              </Text>
+            </YStack>
+          </XStack>
+        </YStack>
 
-        <View style={styles.matchRow}>
-          <View style={styles.player}>
-            <Image
-              source={{ uri: "https://placehold.co/80" }}
-              style={styles.avatar}
-            />
-            <Text>20</Text>
-          </View>
-
-          <View style={styles.lossBox}>
-            <Text style={styles.lossText}>Loss</Text>
-          </View>
-
-          <View style={styles.player}>
-            <Image
-              source={{ uri: "https://placehold.co/80" }}
-              style={styles.avatar}
-            />
-            <Text>30</Text>
-          </View>
-        </View>
-
-        <Text style={styles.quote}>
-          “Winning isn’t everything, but the courage to try and the strength to
-          persevere are what truly define success.”
-        </Text>
-      </View> */}
-      {/* <MainTitle title="Top score" /> */}
-      <ScrollView style={{ flex: 1 }}>
-        {categories.map((category) => {
-          console.log("category", category);
-          return (
-            <View key={category.id} style={styles.category}>
-              <View style={styles.categoryHeader}>
-                <View style={styles.iconBox}>{category.icon}</View>
-                <Text style={styles.categoryTitle}>{category.title}</Text>
-              </View>
-
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {category.users.map((userTop: any, index: number) => {
-                  const userInfo = {
-                    userProfile: userTop?.profile,
-                    user: {
-                      userName: userTop?.userName,
-                      id: userTop?.userId,
-                    },
-                    score: userTop?.score,
-                  };
-                  return (
-                    <View key={index} style={styles.userCard}>
-                      <ImageRank
-                        userInfo={userInfo}
-                        imgSize={85}
-                        score={userTop.score}
-                        imgSrc={getImageUrl(userTop?.profile)}
-                      />
-                      <Text style={styles.userName}>{userTop.userName}</Text>
-                      <Text style={styles.userTime}>{userTop.time}</Text>
-                    </View>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          );
-        })}
+        <MainTitle title="Top score" showBack={false} />
+        <TopScoreItem categories={categories} styles={styles} />
 
         {isLoading && (
           <ActivityIndicator size="large" style={{ marginTop: 20 }} />
@@ -252,5 +224,105 @@ const styles = StyleSheet.create({
   userTime: {
     fontSize: 11,
     color: "gray",
+  },
+  notificationSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 14,
+  },
+
+  notificationSectionTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+    marginBottom: 10,
+  },
+
+  notificationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#EFEFEF",
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
+  notificationAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+
+  winAvatar: {
+    backgroundColor: "#DCFCE7",
+  },
+
+  lossAvatar: {
+    backgroundColor: "#FFE4E6",
+  },
+
+  notificationAvatarText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  notificationContent: {
+    flex: 1,
+  },
+
+  notificationText: {
+    fontSize: 13,
+    color: "#374151",
+  },
+
+  notificationName: {
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  notificationTime: {
+    fontSize: 11,
+    color: "#9CA3AF",
+    marginTop: 3,
+  },
+
+  notificationBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+
+  winBadge: {
+    backgroundColor: "#ECFDF5",
+  },
+
+  lossBadge: {
+    backgroundColor: "#FFF1F2",
+  },
+
+  notificationBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+  },
+
+  winBadgeText: {
+    color: "#16A34A",
+  },
+
+  lossBadgeText: {
+    color: "#E11D48",
   },
 });

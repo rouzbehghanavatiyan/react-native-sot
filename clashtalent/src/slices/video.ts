@@ -115,13 +115,28 @@ export const uploadFullProcessThunk = createAsyncThunk(
         router.replace("/(tabs)/profile");
       });
 
+      let isMatched = false;
+
+      const handleReceiveInvite = (data: any) => {
+        console.log("✅ Match created:", data);
+        isMatched = true;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        dispatch(RsetShowTimerButtn(false));
+        socketClient.off("receive_invite", handleReceiveInvite);
+      };
+      socketClient.once("receive_invite", handleReceiveInvite);
       timeoutId = setTimeout(() => {
-        socketClient.off("receive_invite");
+        if (isMatched) return;
+        socketClient.off("receive_invite", handleReceiveInvite);
         dispatch(RsetShowTimerButtn(false));
         Alert.alert(
           "No Match Found",
           "Unfortunately, no tournament match was found.",
         );
+
         router.replace("/(tabs)/watch");
       }, 120000);
 

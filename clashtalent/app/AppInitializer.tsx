@@ -119,18 +119,39 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
 
         dispatch(RsetUserId(userIdFromToken));
 
-        const profileRes = await profileAttachment(userIdFromToken);
-        const userData = profileRes?.data?.data;
+        try {
+          // بخش درخواست API
+          const profileRes = await profileAttachment(userIdFromToken);
+          const userData = profileRes?.data?.data;
 
-        if (userData) {
-          dispatch(
-            RsetUserLogin({
-              ...userData,
-              token: savedToken,
-              userId: userData?.user?.id || userIdFromToken,
-            }),
+          if (userData) {
+            dispatch(
+              RsetUserLogin({
+                ...userData,
+                token: savedToken,
+                userId: userData?.user?.id || userIdFromToken,
+              }),
+            );
+          } else {
+            dispatch(
+              RsetUserLogin({
+                token: savedToken,
+                userId: userIdFromToken,
+              }),
+            );
+          }
+
+          const finalUserId = Number(userData?.user?.id || userIdFromToken);
+          await loadUserMasterData(finalUserId);
+        } catch (apiError: any) {
+          // اگر فقط API خطا داد، توکن را پاک نکنیم (شاید مشکل اینترنت باشد)
+          console.log(
+            "❌ Profile API Error:",
+            apiError?.response?.data || apiError?.message,
           );
-        } else {
+          logger.error("API call failed in loadCurrentUser", apiError);
+
+          // باز هم استیت های اولیه را ست میکنیم تا کاربر در اپلیکیشن بماند
           dispatch(
             RsetUserLogin({
               token: savedToken,
@@ -138,11 +159,9 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
             }),
           );
         }
-
-        const finalUserId = Number(userData?.user?.id || userIdFromToken);
-
-        await loadUserMasterData(finalUserId);
-      } catch (error) {
+      } catch (error: any) {
+        // این بخش فقط زمانی اجرا میشود که توکن کلا نامعتبر باشد
+        console.log("❌ Token/Auth Error:", error?.message);
         logger.error("loadCurrentUser error", error);
 
         await AsyncStorage.removeItem("token");
@@ -158,15 +177,19 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     try {
       const savedToken = await AsyncStorage.getItem("token");
 
-      if (savedToken) {
-        await loadCurrentUser(savedToken);
+      if (!savedToken) {
+        dispatch(RsetUserLogin(null));
+        dispatch(RsetUserId(null));
+        return;
       }
+
+      await loadCurrentUser(savedToken);
     } catch (error) {
       logger.error("initializeAuth error", error);
     } finally {
       setIsInitializing(false);
     }
-  }, [loadCurrentUser]);
+  }, [loadCurrentUser, dispatch]);
 
   useEffect(() => {
     initializeAuth();
@@ -176,17 +199,17 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     if (isInitializing) return;
 
     const inAuthGroup = segments[0] === "(auth)";
-    const isLoggedIn = Boolean(token || userId || userLoginId);
+    const isLoggedIn = Boolean(token);
 
-    if (!isLoggedIn && !inAuthGroup) {
+    if (!isLoggedIn && !inAuthGroup && pathname !== "/login") {
       router.replace("/login");
       return;
     }
 
-    if (isLoggedIn && inAuthGroup) {
+    if (isLoggedIn && inAuthGroup && pathname !== "/(tabs)/watch") {
       router.replace("/(tabs)/watch");
     }
-  }, [isInitializing, segments, token, userId, userLoginId, router]);
+  }, [isInitializing, segments, token, userId, userLoginId, pathname, router]);
 
   // useEffect(() => {
   //   const activeUserId = Number(userLoginId || userId);
@@ -280,5 +303,23 @@ export function AppInitializer({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {isInitializing && (
+        <View
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+          position="absolute"
+          t={0}
+          l={0}
+          r={0}
+          b={0}
+        >
+          <ActivityIndicator />
+        </View>
+      )}
+    </>
+  );
 }
