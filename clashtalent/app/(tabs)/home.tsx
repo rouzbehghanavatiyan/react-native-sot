@@ -1,3 +1,4 @@
+import VideoSkeleton from "@/src/components/VideoSkeleton";
 import ShowWatchSlide from "@/src/components/VideoSlide";
 import { useShowWatch } from "@/src/hook/useShowWatch";
 import { followerAttachmentList } from "@/src/services/masterServices";
@@ -118,9 +119,7 @@ const HomeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {showInitialLoader ? (
-        <View style={styles.loaderWrapper}>
-          <Text>Loading...</Text>
-        </View>
+        <VideoSkeleton count={4} section="itsHome" isSwapper={false} />
       ) : showEmptyState ? (
         <View style={styles.emptyWrapper}>
           <View style={styles.emptyCard}>
@@ -170,11 +169,16 @@ const HomeScreen: React.FC = () => {
         pointerEvents={showComments ? "auto" : "none"}
       >
         <Comments
-          video={selectedVideo}
+          visible={showComments}
+          onClose={() => {
+            setShowComments(false);
+            setCommentInfo(null);
+            setSelectedVideo(null);
+            setCommentPosition(0);
+          }}
+          video={commentInfo}
           positionVideo={commentPosition}
-          commentUserInfo={commentInfo}
-          showComments={showComments}
-          setShowComments={setShowComments}
+          userIdLogin={userIdLogin}
         />
       </View>
     </View>

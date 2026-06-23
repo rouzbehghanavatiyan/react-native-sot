@@ -41,7 +41,7 @@ const Arena: React.FC<any> = ({ updateStepData }) => {
 
   return (
     <View style={styles.container}>
-      <MainTitle showBack title="Arena" />
+      <MainTitle showBack={false} title="Arena" />
       <SoftLink
         iconMap={arenaIconMap}
         handleAcceptCategory={handleAcceptCategory}

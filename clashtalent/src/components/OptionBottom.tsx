@@ -5,6 +5,7 @@ import { Text, View, XStack } from "tamagui";
 import { addLike, removeLike } from "../services/masterServices";
 import { useAppDispatch } from "../store/reduxHookType";
 import { Icon } from "./Icon";
+import { socketClient } from "../utils/socketClient";
 
 interface OptionBottomProps {
   handleToggleComments: () => void;
@@ -16,7 +17,6 @@ interface OptionBottomProps {
   userIdLogin: string | null;
   countLiked?: number;
   externalIsLiked?: boolean;
-  socket?: any;
 }
 
 const OptionBottom: React.FC<OptionBottomProps> = ({
@@ -29,7 +29,6 @@ const OptionBottom: React.FC<OptionBottomProps> = ({
   userIdLogin,
   countLiked,
   externalIsLiked,
-  socket,
 }) => {
   const dispatch = useAppDispatch();
   const [isLiked, setIsLiked] = useState(false);
@@ -110,14 +109,14 @@ const OptionBottom: React.FC<OptionBottomProps> = ({
       if (isLiked) {
         // اگر قبلاً لایک کرده، حالا آنلایک می‌کند
         await removeLike(postData);
-        if (socket) {
-          socket.emit("remove_liked", postData);
+        if (socketClient) {
+          socketClient.emit("remove_liked", postData);
         }
       } else {
         // اگر قبلاً لایک نکرده، حالا لایک می‌کند
         await addLike(postData);
-        if (socket) {
-          socket.emit("add_liked", postData);
+        if (socketClient) {
+          socketClient.emit("add_liked", postData);
         }
       }
 
@@ -139,7 +138,7 @@ const OptionBottom: React.FC<OptionBottomProps> = ({
         setLocalLikeCount((prev) => prev + 1);
       }
     }
-  }, [isLiked, movieId, userIdLogin, socket, dispatch, positionVideo]);
+  }, [isLiked, movieId, userIdLogin, socketClient, dispatch, positionVideo]);
 
   const getResultStyle = () => {
     switch (result) {

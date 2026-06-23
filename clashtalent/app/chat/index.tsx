@@ -21,6 +21,44 @@ interface MessageData {
   [key: string]: any;
 }
 
+const mockUsers: MessageData[] = [
+  {
+    id: 1,
+    sender: 101,
+    userNameSender: "Cristiano Ronaldo",
+    score: 9999,
+    image: "https://i.pravatar.cc/150?img=1",
+  },
+  {
+    id: 2,
+    sender: 102,
+    userNameSender: "Lionel Messi",
+    score: 9800,
+    image: "https://i.pravatar.cc/150?img=2",
+  },
+  {
+    id: 3,
+    sender: 103,
+    userNameSender: "Neymar Jr",
+    score: 9500,
+    image: "https://i.pravatar.cc/150?img=3",
+  },
+  {
+    id: 4,
+    sender: 104,
+    userNameSender: "Kylian Mbappe",
+    score: 9200,
+    image: "https://i.pravatar.cc/150?img=4",
+  },
+  {
+    id: 5,
+    sender: 105,
+    userNameSender: "Erling Haaland",
+    score: 9000,
+    image: "https://i.pravatar.cc/150?img=5",
+  },
+];
+
 const ChatRoom: React.FC = () => {
   const router = useRouter();
   const main = useAppSelector((state) => state?.main);
@@ -60,20 +98,13 @@ const ChatRoom: React.FC = () => {
   );
 
   const handleGetUserMessages = useCallback(async () => {
-    // if (!userIdLogin) return;
-    // try {
-    //   setIsLoading(true);
-    //   const res = await allUserMessagese(userIdLogin);
-    //   const { data, status } = res?.data || {};
-    //   if (status === 0) {
-    //     setUserSender(data || []);
-    //   }
-    // } catch (error) {
-    //   console.log("Get user messages error:", error);
-    // } finally {
-    //   setIsLoading(false);
-    // }
-  }, [userIdLogin]);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setUserSender(mockUsers);
+      setIsLoading(false);
+    }, 500);
+  }, []);
 
   const handleReceiveMessage = useCallback(
     async (data: MessageData) => {
@@ -155,13 +186,12 @@ const ChatRoom: React.FC = () => {
             return (
               <Pressable key={uniqueKey} onPress={() => handleRedirect(user)}>
                 <XStack
-                  position="relative"
-                  alignItems="center"
-                  px="$2"
-                  py="$2"
-                  borderBottomWidth={1}
-                  borderBottomColor="$gray5"
-                  bg="$gray2"
+                  p="$4"
+                  bc="$grey100"
+                  my={1}
+                  ai="center"
+                  jc="space-between"
+                  bg="$white"
                 >
                   <ImageRank
                     userName={user?.userNameSender}
@@ -172,12 +202,10 @@ const ChatRoom: React.FC = () => {
 
                   {unreadMessages[user.sender] && (
                     <View
-                      position="absolute"
-                      right="$4"
-                      width={14}
-                      height={14}
+                      width={12}
+                      height={12}
                       borderRadius={999}
-                      bg="$red10"
+                      bg="#FF3040"
                     />
                   )}
                 </XStack>

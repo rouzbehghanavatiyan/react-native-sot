@@ -13,20 +13,16 @@ import {
   RsetUserId,
   RsetUserLogin,
 } from "@/src/slices/main";
-
 import { logger } from "@/src/utils/logger";
 import { socketClient } from "@/src/utils/socketClient";
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View } from "@tamagui/core";
-
 import {
   useLocalSearchParams,
   usePathname,
   useRouter,
   useSegments,
 } from "expo-router";
-
 import { jwtDecode } from "jwt-decode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator } from "react-native";
