@@ -170,11 +170,16 @@ const HomeScreen: React.FC = () => {
         pointerEvents={showComments ? "auto" : "none"}
       >
         <Comments
-          video={selectedVideo}
+          visible={showComments}
+          onClose={() => {
+            setShowComments(false);
+            setCommentInfo(null);
+            setSelectedVideo(null);
+            setCommentPosition(0);
+          }}
+          video={commentInfo}
           positionVideo={commentPosition}
-          commentUserInfo={commentInfo}
-          showComments={showComments}
-          setShowComments={setShowComments}
+          userIdLogin={userIdLogin}
         />
       </View>
     </View>
