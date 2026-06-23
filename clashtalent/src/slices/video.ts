@@ -10,6 +10,7 @@ import {
 import { logger } from "../utils/logger";
 import { RsetShowTimerButtn } from "./main";
 import { VideoState } from "./type";
+import { socketClient } from "../utils/socketClient";
 
 const initialState: VideoState = {
   videoSrc: null,
@@ -119,25 +120,26 @@ export const uploadFullProcessThunk = createAsyncThunk(
         userId: userId || null,
         movieId: movieId || null,
         status: 0,
+        inviteId: null,
       };
 
       const inviteRes = await addInvite(postInvite);
 
       logger.info("invite response", inviteRes);
 
-      if (inviteRes?.data?.status !== 0) {
-        throw new Error("Error in creating invite");
-      }
+      // if (inviteRes?.data?.status !== 0) {
+      //   throw new Error("Error in creating invite");
+      // }
 
       const inviteData = inviteRes?.data?.data;
 
       dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(true));
 
-      if (!socket || !socket.connected) {
+      if (!socketClient || !socketClient.connected) {
         timeoutId = setTimeout(() => {
           dispatch(RsetShowTimerButtn(false));
-          Alert.alert("Socket is not connected. Please try again.");
+          Alert.alert("socketClient is not connected. Please try again.");
         }, 60000);
 
         return {
@@ -147,11 +149,8 @@ export const uploadFullProcessThunk = createAsyncThunk(
         };
       }
 
-      /**
-       * ارسال socket با ACK
-       */
       const socketResult: any = await new Promise((resolve, reject) => {
-        socket
+        socketClient
           .timeout(20000)
           .emit("add_invite_offline", inviteData, (err: any, response: any) => {
             if (err) {

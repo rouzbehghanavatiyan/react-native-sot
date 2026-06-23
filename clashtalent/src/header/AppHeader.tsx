@@ -25,6 +25,7 @@ const AppHeader = () => {
     }),
     [pathname],
   );
+  
   const titleMap: Record<string, string> = {
     "/topScore": "Top score",
     "/profile": "Profile",
