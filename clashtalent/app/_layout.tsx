@@ -22,18 +22,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-        {/* PortalProvider مخصوص تامagui؛ shouldAddRootHost باعث می‌شه
-            یک Portal.Host در ریشه‌ی اپ ساخته شود که Popover/Tooltip/Dialog
-            و موارد مشابه بتوانند درون آن رندر شوند */}
         <PortalProvider shouldAddRootHost>
-          <GorhomPortalProvider>
-            <BottomSheetModalProvider>
-              <SafeAreaProvider>
-                <Provider store={store}>
+          <SafeAreaProvider>
+            <Provider store={store}>
+              <GorhomPortalProvider>
+                <BottomSheetModalProvider>
                   <AppInitializer>
                     {fontsLoaded ? (
+                      // <ConfirmDialogProvider>
                       <Slot />
                     ) : (
+                      // </ConfirmDialogProvider>
                       <View
                         flex={1}
                         justifyContent="center"
@@ -43,10 +42,10 @@ export default function RootLayout() {
                       </View>
                     )}
                   </AppInitializer>
-                </Provider>
-              </SafeAreaProvider>
-            </BottomSheetModalProvider>
-          </GorhomPortalProvider>
+                </BottomSheetModalProvider>
+              </GorhomPortalProvider>
+            </Provider>
+          </SafeAreaProvider>
         </PortalProvider>
       </TamaguiProvider>
     </GestureHandlerRootView>

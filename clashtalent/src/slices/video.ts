@@ -38,7 +38,6 @@ const initialState: VideoState = {
 export const prepareVideoFileThunk = createAsyncThunk(
   "video/prepareFile",
   async (fileAsset: any) => {
-    // fileAsset چیزی شبیه به { uri: '...', fileName: '...', mimeType: '...' } است
     const src = fileAsset.uri;
     return { file: fileAsset, src };
   },

@@ -75,17 +75,17 @@ const Following = () => {
                 key={index}
                 p="$4"
                 bc="$grey100"
+                my={1}
                 ai="center"
                 jc="space-between"
                 bg="$white"
               >
                 <ImageRank
                   score={0}
-                  imgSize={60}
+                  imgSize={50}
                   userName={user?.userName || "Unknown User"}
                   imgSrc={image}
                 />
-
                 <Follows
                   title={followed ? "Unfollow" : "Follow"}
                   onFollowClick={() => toggleFollow(userId)}
