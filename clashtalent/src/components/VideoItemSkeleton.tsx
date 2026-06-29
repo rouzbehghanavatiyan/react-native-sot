@@ -89,9 +89,9 @@ const VideoItemSkeleton: React.FC<PropsType> = ({ section }) => {
     case "itsHome":
       const heights = [
         height * 0.06,
-        height * 0.37,
+        height * 0.38,
         height * 0.06,
-        height * 0.37,
+        height * 0.38,
       ];
 
       return (

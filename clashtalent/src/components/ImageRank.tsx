@@ -330,7 +330,8 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   defaultUserName: {
-    color: "#1f2937",
+    color: "#bbbbbb",
+    marginLeft: 6,
   },
 });
 

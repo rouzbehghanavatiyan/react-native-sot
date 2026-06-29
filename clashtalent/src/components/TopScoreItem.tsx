@@ -12,11 +12,10 @@ const TopScoreItem = ({ categories }: any) => {
             <YStack width={40} height={40} ai="center" jc="center">
               {category.icon}
             </YStack>
-            <Text fontSize="$5" fontWeight="700">
+            <Text fontSize="$4" fontWeight="700">
               {category.title}
             </Text>
           </XStack>
-
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <XStack px="$2">
               {category.users?.map((userTop: any, index: number) => {
@@ -37,11 +36,9 @@ const TopScoreItem = ({ categories }: any) => {
                       score={userTop?.score}
                       imgSrc={getImageUrl(userTop?.profile)}
                     />
-
                     <Text mt="$2" fontSize="$3" ta="center" numberOfLines={1}>
                       {userTop?.userName}
                     </Text>
-
                     {!!userTop?.time && (
                       <Text fontSize="$2" color="$textSecondary">
                         {userTop?.time}

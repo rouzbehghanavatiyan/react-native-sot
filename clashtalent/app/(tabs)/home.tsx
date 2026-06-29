@@ -8,7 +8,6 @@ import {
   setPaginationHomeMatch,
 } from "@/src/slices/main";
 import { useAppSelector } from "@/src/store/reduxHookType";
-import { logger } from "@/src/utils/logger";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { FlashList } from "@shopify/flash-list";
@@ -26,22 +25,21 @@ const HomeScreen: React.FC = () => {
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const usableHeight: any = height - headerHeight - tabBarHeight;
+
   const [showComments, setShowComments] = useState(false);
-  const [commentInfo, setCommentInfo] = useState<any>(null);
   const [commentPosition, setCommentPosition] = useState(0);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
 
-  console.log("Home render showComments:", showComments);
-  console.log("selectedVideo:", selectedVideo);
-  console.log("commentInfo:", commentInfo);
-  console.log("commentPosition:", commentPosition);
-
   const handleOpenComments = useCallback((video: any, position: number) => {
-    console.log("handleOpenComments called", { video, position });
     setSelectedVideo(video);
-    setCommentInfo(video);
     setCommentPosition(position ?? 0);
     setShowComments(true);
+  }, []);
+
+  const handleCloseComments = useCallback(() => {
+    setShowComments(false);
+    setSelectedVideo(null);
+    setCommentPosition(0);
   }, []);
 
   const customFetchNextPage = useCallback(
@@ -97,19 +95,44 @@ const HomeScreen: React.FC = () => {
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: any }) => {
-      if (viewableItems && viewableItems.length > 0) {
-        const visibleItem = viewableItems[0];
-        if (visibleItem.index !== null) {
-          setCurrentIndex(visibleItem.index);
-          handleSlideChange(visibleItem.index);
-        }
-      }
-    },
-  ).current;
+  // const onViewableItemsChanged = useRef(
+  //   ({ viewableItems }: { viewableItems: any }) => {
+  //     if (viewableItems && viewableItems.length > 0) {
+  //       const visibleItem = viewableItems[0];
+  //       if (visibleItem.index !== null) {
+  //         setCurrentIndex(visibleItem.index);
+  //         handleSlideChange(visibleItem.index);
+  //       }
+  //     }
+  //   },
+  // ).current;
 
-  logger.info("home data", data);
+  const onMomentumScrollEnd = useCallback(
+    (event: any) => {
+      const offsetY = event.nativeEvent.contentOffset.y;
+      const index = Math.round(offsetY / usableHeight);
+
+      setCurrentIndex(index);
+      handleSlideChange?.(index);
+
+      const itemData = data?.[index];
+      if (!itemData) {
+        handleVideoPlay(null);
+        return;
+      }
+
+      const topVideoId = itemData?.attachmentInserted?.attachmentId;
+      const bottomVideoId = itemData?.attachmentMatched?.attachmentId;
+
+      const videoIdToPlay =
+        index % 2 === 0
+          ? topVideoId || bottomVideoId
+          : bottomVideoId || topVideoId;
+
+      handleVideoPlay(videoIdToPlay || null);
+    },
+    [usableHeight, data, handleSlideChange, handleVideoPlay],
+  );
 
   const showInitialLoader =
     !hasFetchedOnce.current && (!data || data.length === 0);
@@ -119,7 +142,7 @@ const HomeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {showInitialLoader ? (
-        <VideoSkeleton count={4} section="itsHome" isSwapper={false} />
+        <VideoSkeleton count={1} section="itsHome" isSwapper={false} />
       ) : showEmptyState ? (
         <View style={styles.emptyWrapper}>
           <View style={styles.emptyCard}>
@@ -134,13 +157,15 @@ const HomeScreen: React.FC = () => {
         <View style={{ flex: 1, width, height: usableHeight }}>
           <FlashList
             data={data || []}
+            extraData={currentlyPlayingId}
             keyExtractor={(item, index) =>
               item?.id?.toString() || index.toString()
             }
             pagingEnabled
             showsVerticalScrollIndicator={false}
             viewabilityConfig={viewabilityConfig}
-            onViewableItemsChanged={onViewableItemsChanged}
+            // onViewableItemsChanged={onViewableItemsChanged}
+            onMomentumScrollEnd={onMomentumScrollEnd}
             renderItem={({ item, index }) => (
               <View style={{ width, height: usableHeight }}>
                 <ShowWatchSlide
@@ -164,23 +189,20 @@ const HomeScreen: React.FC = () => {
           />
         </View>
       )}
-      <View
-        style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}
-        pointerEvents={showComments ? "auto" : "none"}
-      >
-        <Comments
-          visible={showComments}
-          onClose={() => {
-            setShowComments(false);
-            setCommentInfo(null);
-            setSelectedVideo(null);
-            setCommentPosition(0);
-          }}
-          video={commentInfo}
-          positionVideo={commentPosition}
-          userIdLogin={userIdLogin}
-        />
-      </View>
+      {showComments && (
+        <View
+          style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}
+          pointerEvents="auto"
+        >
+          <Comments
+            visible={showComments}
+            onClose={handleCloseComments}
+            video={selectedVideo}
+            positionVideo={commentPosition}
+            userIdLogin={userIdLogin}
+          />
+        </View>
+      )}
     </View>
   );
 };

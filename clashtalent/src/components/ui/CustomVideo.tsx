@@ -18,20 +18,19 @@ const CustomVideo = ({ player }: any) => {
 
   const barWidth = SCREEN_WIDTH;
 
-  useEffect(() => {
-    if (!player) return;
+  // useEffect(() => {
+  //   if (!player) return;
 
-    const sub = player.addListener("timeUpdate", (e: any) => {
-      setPosition(e.currentTime);
-      setDuration(e.duration || 1);
-    });
+  //   const sub = player.addListener("timeUpdate", (e: any) => {
+  //     setPosition(e.currentTime);
+  //     setDuration(e.duration || 1);
+  //   });
 
-    return () => {
-      sub.remove();
-    };
-  }, [player]);
+  //   return () => {
+  //     sub.remove();
+  //   };
+  // }, [player]);
 
-  // توقف ویدیو وقتی صفحه عوض شود
   useEffect(() => {
     if (!player) return;
 

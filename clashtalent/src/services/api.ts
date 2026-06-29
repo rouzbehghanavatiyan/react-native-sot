@@ -42,8 +42,7 @@ api.interceptors.response.use(
       if (navigationRef) {
         router.replace("/login");
 
-        // یا برای React Navigation
-        // navigationRef.navigate('Login');
+        navigationRef.navigate("Login");
       }
 
       return Promise.reject(error);

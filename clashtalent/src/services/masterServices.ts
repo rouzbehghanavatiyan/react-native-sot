@@ -1,4 +1,8 @@
+import axios from "axios";
 import { api } from "./api";
+import { getToken } from "./tokenServices";
+
+const chatBaseURL = process.env.EXPO_PUBLIC_SOCKET;
 
 export const attachmentList = async (postData: {
   skip: number;
@@ -82,6 +86,48 @@ export const addAttachment = async (postData: any) => {
   });
 };
 
+export const uploadToNestJS = async (
+  videoFile: any,
+  imageCover: any,
+  attachmentId: string | number,
+  attachmentType: string = "mo",
+  attachmentName: string = "movies",
+) => {
+  const token = await getToken();
+
+  const formData = new FormData();
+
+  formData.append("video", {
+    uri: videoFile.uri,
+    name: videoFile.name ?? "video.mp4",
+    type: videoFile.type ?? "video/mp4",
+  } as any);
+
+  formData.append("imageCover", {
+    uri: imageCover.uri,
+    name: imageCover.name ?? "cover.jpg",
+    type: imageCover.type ?? "image/jpeg",
+  } as any);
+
+  formData.append("attachmentId", String(attachmentId));
+  formData.append("attachmentType", attachmentType);
+  formData.append("attachmentName", attachmentName);
+
+  return await axios.post(`${chatBaseURL}/api/file/uploadVideo`, formData, {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+    onUploadProgress: (progressEvent) => {
+      const percent = Math.round(
+        (progressEvent.loaded * 100) / (progressEvent.total ?? 1),
+      );
+      console.log(`آپلود: ${percent}%`);
+    },
+  });
+};
+
 export const removeFollower = async (postData: any) => {
   return await api.delete(`/removeFollower`, { data: postData });
 };
@@ -139,7 +185,46 @@ export const topScoreList = async () => {
   return await api.get(`/topScoreList`);
 };
 
+export const uploadVideo = async (postData: any) => {
+  return await axios.post(`${chatBaseURL}/api/file/uploadVideo`, postData);
+};
+
 export const removeComment = async (commentId: number) => {
   // const url = `${baseURL}/removeComment?commentId=${commentId}`;
   // return await axios.delete(url);
+};
+
+export const userMessages = async (
+  userIdLogin: number,
+  userIdSender: number,
+  skip: number,
+  take: number,
+): Promise<any> => {
+  try {
+    const token = await getToken();
+
+    if (!chatBaseURL) {
+      throw new Error("EXPO_PUBLIC_SOCKET is not defined");
+    }
+
+    const response = await axios.get(`${chatBaseURL}/chat/userMessages`, {
+      params: {
+        userIdLogin,
+        userIdSender,
+        skip,
+        take,
+      },
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : undefined,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error?.response?.data?.message || "Failed to fetch user messages",
+    );
+  }
 };

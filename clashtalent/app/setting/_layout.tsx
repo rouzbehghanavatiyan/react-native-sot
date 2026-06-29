@@ -16,12 +16,10 @@ export default function SettingLayout() {
     try {
       setIsLoggingOut(true);
 
-      // پاک کردن کامل AsyncStorage
       await AsyncStorage.clear();
 
       setLogoutDialogOpen(false);
 
-      // انتقال به صفحه لاگین
       router.replace("/login");
     } catch (error) {
       console.log("Logout error:", error);
