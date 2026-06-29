@@ -72,7 +72,6 @@ export default function VideoSection({
         <View style={styles.videoCenter}>
           <CustomVideo player={player} />
           <OptionBottom
-            socket={socket}
             userIdLogin={userIdLogin}
             video={video}
             endTime={endTime}
@@ -129,6 +128,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
   },
 });
-
-
-
