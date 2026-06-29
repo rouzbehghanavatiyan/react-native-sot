@@ -75,7 +75,6 @@ export default function VideoSection({
             player={player}
           />
           <OptionBottom
-            socket={socket}
             userIdLogin={userIdLogin}
             video={video}
             endTime={endTime}
