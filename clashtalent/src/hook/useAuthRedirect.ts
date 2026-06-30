@@ -29,8 +29,8 @@ export function useAuthRedirect({
       return;
     }
 
-    if (isLoggedIn && inAuthGroup && pathname !== "/(tabs)/watch") {
-      router.replace("/(tabs)/watch");
-    }
+    // if (isLoggedIn && inAuthGroup && pathname !== "/(tabs)/watch") {
+    //   router.replace("/(tabs)/watch");
+    // }
   }, [isInitializing, segments, token, userId, userLoginId, pathname, router]);
 }

@@ -26,26 +26,23 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+let isRedirecting = false;
+
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      console.log(originalRequest, "errorerrorerrorerrorerrorerror");
-      await removeToken();
-      router.replace("/login");
-      if (navigationRef) {
+      if (!isRedirecting) {
+        isRedirecting = true;
+
+        await removeToken();
+
         router.replace("/login");
-
-        navigationRef.navigate("Login");
       }
-
-      return Promise.reject(error);
     }
 
     return Promise.reject(error);

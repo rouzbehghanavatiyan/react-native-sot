@@ -10,6 +10,7 @@ import {
   XStack,
   YStack,
 } from "tamagui";
+import { logger } from "../utils/logger";
 
 const Started = require("../assets/ranks/starter.png");
 const bronseBase1 = require("../assets/ranks/bronze.png");
@@ -55,6 +56,8 @@ const ProfileBio: React.FC<ProfileBioProps> = ({
   rankScore,
   rankPercentage,
 }) => {
+  logger.info("rankPercentage rankPercentage", rankPercentage);
+
   return (
     <YStack px="$4" alignItems="center" w="100%">
       <Popover size="$5" allowFlip placement="bottom">

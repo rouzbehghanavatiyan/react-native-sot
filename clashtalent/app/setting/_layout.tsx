@@ -1,10 +1,12 @@
+import BaseButton from "@/src/components/BaseButtom";
 import MainTitle from "@/src/components/MainTitle";
 import SoftLink from "@/src/components/SoftLink";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { Modal, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AlertDialog, Button, Text, View, XStack, YStack } from "tamagui";
+import { Text, View, XStack, YStack } from "tamagui";
 
 export default function SettingLayout() {
   const router = useRouter();
@@ -15,11 +17,8 @@ export default function SettingLayout() {
   const handleLogoutConfirm = async () => {
     try {
       setIsLoggingOut(true);
-
       await AsyncStorage.clear();
-
       setLogoutDialogOpen(false);
-
       router.replace("/login");
     } catch (error) {
       console.log("Logout error:", error);
@@ -33,22 +32,18 @@ export default function SettingLayout() {
       setLogoutDialogOpen(true);
       return;
     }
-
     if (category.name === "Profile") {
       router.push("/profile");
       return;
     }
-
     if (category.name === "Support") {
       router.push("/support");
       return;
     }
-
     if (category.name === "About us") {
       router.push("/about");
       return;
     }
-
     if (category.name === "Mark") {
       router.push("/mark");
       return;
@@ -63,104 +58,77 @@ export default function SettingLayout() {
         <SoftLink
           handleAcceptCategory={handleAcceptCategory}
           categories={[
-            {
-              name: "Signout",
-              id: 1,
-              icon: "logout",
-            },
-            {
-              name: "Profile",
-              id: 2,
-              icon: "person",
-            },
-            {
-              name: "Support",
-              id: 3,
-              icon: "support-agent",
-            },
-            {
-              name: "About us",
-              id: 4,
-              icon: "info",
-            },
-            {
-              name: "Mark",
-              id: 5,
-              icon: "star",
-            },
+            { name: "Signout", id: 1, icon: "logout" },
+            { name: "Profile", id: 2, icon: "person" },
+            { name: "Support", id: 3, icon: "support-agent" },
+            { name: "About us", id: 4, icon: "info" },
+            { name: "Mark", id: 5, icon: "star" },
           ]}
           isLoading={false}
         />
       </View>
 
-      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-        {/* حذف کردن AlertDialog.Portal */}
-        <AlertDialog.Overlay
-          key="overlay"
-          opacity={0.45}
-          bg="black"
-          animation="quick"
-          enterStyle={{ opacity: 0 }}
-          exitStyle={{ opacity: 0 }}
-        />
-
-        <AlertDialog.Content
-          key="content"
-          bordered
-          elevate
-          animation="quick"
-          enterStyle={{ opacity: 0, scale: 0.95, y: 10 }}
-          exitStyle={{ opacity: 0, scale: 0.95, y: 10 }}
-          width="85%"
-          maxWidth={360}
-          bg="$backgroundPaper"
-          borderRadius="$4"
-          p="$5"
+      <Modal
+        visible={logoutDialogOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLogoutDialogOpen(false)}
+      >
+        {/* بک‌دراپ */}
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 24,
+          }}
+          onPress={() => !isLoggingOut && setLogoutDialogOpen(false)}
         >
-          <YStack space="$4">
-            <YStack space="$2">
-              <AlertDialog.Title>
+          {/* جلوگیری از بسته شدن با کلیک روی خود باکس */}
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 360 }}
+          >
+            <YStack
+              bg="$backgroundPaper"
+              borderRadius="$4"
+              p="$5"
+              gap={10}
+              elevation={6}
+            >
+              <YStack gap={10}>
                 <Text fontSize="$4" fontWeight="700" color="$textPrimary">
                   Sign out
                 </Text>
-              </AlertDialog.Title>
-
-              <AlertDialog.Description>
-                <Text fontSize="$2" color="$textSecondary">
+                <Text fontSize="$3" color="$textSecondary">
                   Are you sure you want to sign out? Your local session data
                   will be removed.
                 </Text>
-              </AlertDialog.Description>
-            </YStack>
+              </YStack>
 
-            <XStack jc="flex-end" space="$3">
-              <AlertDialog.Cancel asChild>
-                <Button
+              <XStack jc="flex-end" gap={10}>
+                <BaseButton
                   disabled={isLoggingOut}
-                  bg="$grey200"
-                  color="$textPrimary"
-                  borderRadius="$3"
+                  onPress={() => setLogoutDialogOpen(false)}
+                  bg="$grey400"
+                  variant="outlined"
+                  type="submit"
                 >
                   Cancel
-                </Button>
-              </AlertDialog.Cancel>
-
-              <AlertDialog.Action asChild>
-                <Button
+                </BaseButton>
+                <BaseButton
                   disabled={isLoggingOut}
                   onPress={handleLogoutConfirm}
                   bg="$errorMain"
-                  color="white"
-                  borderRadius="$3"
-                  fontWeight="700"
                 >
                   {isLoggingOut ? "Signing out..." : "Confirm"}
-                </Button>
-              </AlertDialog.Action>
-            </XStack>
-          </YStack>
-        </AlertDialog.Content>
-      </AlertDialog>
+                </BaseButton>
+              </XStack>
+            </YStack>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

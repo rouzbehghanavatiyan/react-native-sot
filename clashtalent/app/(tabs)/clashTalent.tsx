@@ -48,11 +48,61 @@ const Sot: React.FC = () => {
     AsyncStorage.setItem("rememberMe", String(rememberMe));
   }, [rememberMe]);
 
-  const updateStepData = (stepNumber: number, data: any) => {
+  // const updateStepData = (stepNumber: number, data: any) => {
+  //   const updatedSteps: any = stepsData?.map((step, index) =>
+  //     index === stepNumber - 1 ? { title: data.name, icon: data.icon } : step,
+  //   );
+  //   setStepsData(updatedSteps);
+
+  //   setCurrentStep((prev) => ({
+  //     ...prev,
+  //     [stepNumber === 1
+  //       ? "arena"
+  //       : stepNumber === 2
+  //         ? "skill"
+  //         : stepNumber === 3
+  //           ? "gear"
+  //           : ""]: data,
+  //     number: stepNumber + 1,
+  //   }));
+  // };
+  const updateStepData = async (stepNumber: number, data: any) => {
     const updatedSteps: any = stepsData?.map((step, index) =>
       index === stepNumber - 1 ? { title: data.name, icon: data.icon } : step,
     );
+
     setStepsData(updatedSteps);
+
+    // ذخیره در استوریج فقط اگر remember روشن باشد
+    if (rememberMe) {
+      try {
+        if (stepNumber === 1) {
+          await AsyncStorage.multiSet([
+            ["arenaId", String(data.id)],
+            ["arenaName", data.name || ""],
+            ["arenaIconName", data.icon || ""],
+          ]);
+        }
+
+        if (stepNumber === 2) {
+          await AsyncStorage.multiSet([
+            ["skillId", String(data.subCategoryId || data.id)],
+            ["skillName", data.name || ""],
+            ["skillIconName", data.icon || ""],
+          ]);
+        }
+
+        if (stepNumber === 3) {
+          await AsyncStorage.multiSet([
+            ["gearId", String(data.id)],
+            ["gearName", data.name || ""],
+            ["gearIconName", data.icon || ""],
+          ]);
+        }
+      } catch (error) {
+        console.log("Storage save error:", error);
+      }
+    }
 
     setCurrentStep((prev) => ({
       ...prev,

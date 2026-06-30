@@ -11,7 +11,7 @@ import { useAppSelector } from "@/src/store/reduxHookType";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { FlashList } from "@shopify/flash-list";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Comments from "../comments";
 
@@ -107,10 +107,31 @@ const HomeScreen: React.FC = () => {
   //   },
   // ).current;
 
+  // ① ref جدید اضافه کن - بعد از hasFetchedOnce
+  const hasInitiallyPlayed = useRef(false);
+
+  // ② این useEffect رو قبل از viewabilityConfig اضافه کن
+  useEffect(() => {
+    // فقط یک بار و بعد از اینکه data واقعاً لود شد اجرا میشه
+    if (hasInitiallyPlayed.current) return;
+    if (!data || data.length === 0) return;
+
+    hasInitiallyPlayed.current = true;
+
+    const firstItem = data[0];
+    // slide اول → position 0 (ویدیو بالایی) پلی بشه
+    const topVideoId = firstItem?.attachmentInserted?.attachmentId;
+    const fallbackId = firstItem?.attachmentMatched?.attachmentId;
+
+    handleVideoPlay(topVideoId || fallbackId || null);
+  }, [data, handleVideoPlay]);
+
+  // ② منطق onMomentumScrollEnd را اصلاح کن
   const onMomentumScrollEnd = useCallback(
     (event: any) => {
       const offsetY = event.nativeEvent.contentOffset.y;
-      const index = Math.round(offsetY / usableHeight);
+      // محاسبه دقیق‌تر با floor به‌جای round
+      const index = Math.floor(offsetY / usableHeight + 0.5);
 
       setCurrentIndex(index);
       handleSlideChange?.(index);
@@ -124,12 +145,11 @@ const HomeScreen: React.FC = () => {
       const topVideoId = itemData?.attachmentInserted?.attachmentId;
       const bottomVideoId = itemData?.attachmentMatched?.attachmentId;
 
-      const videoIdToPlay =
-        index % 2 === 0
-          ? topVideoId || bottomVideoId
-          : bottomVideoId || topVideoId;
+      // همیشه اول top را چک کن، اگر نبود bottom را پلی کن
+      // % 2 را حذف کن - مشکل‌ساز بود
+      const videoIdToPlay = topVideoId || bottomVideoId;
 
-      handleVideoPlay(videoIdToPlay || null);
+      handleVideoPlay(videoIdToPlay ?? null);
     },
     [usableHeight, data, handleSlideChange, handleVideoPlay],
   );
@@ -161,6 +181,7 @@ const HomeScreen: React.FC = () => {
             keyExtractor={(item, index) =>
               item?.id?.toString() || index.toString()
             }
+            estimatedItemSize={usableHeight}
             pagingEnabled
             showsVerticalScrollIndicator={false}
             viewabilityConfig={viewabilityConfig}
