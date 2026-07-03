@@ -2,10 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Alert } from "react-native";
 import {
+  addAttachment,
   addInvite,
   addMovie,
   removeInvite,
-  uploadToNestJS,
 } from "../services/masterServices";
 import { logger } from "../utils/logger";
 import { socketClient } from "../utils/socketClient";
@@ -74,33 +74,21 @@ export const uploadFullProcessThunk = createAsyncThunk(
       const movieRes = await addMovie(postData);
       const movieDataRes = movieRes?.data?.data;
 
-      // if (movieRes?.data?.status !== 0) {
-      //   throw new Error("Error in recording initial movie information");
-      // }
+      if (movieRes?.data?.status !== 0) {
+        throw new Error("Error in recording initial movie information");
+      }
 
-      // const formData = new FormData();
-      // formData.append("formFile", allFormData?.video);
-      // formData.append("formFile", allFormData?.imageCover);
-      // formData.append("attachmentId", movieDataRes?.id);
-      // formData.append("attachmentType", "mo");
-      // formData.append("attachmentName", "movies");
-      // const attachRes = await addAttachment(formData);
-      const attachRes = await uploadToNestJS(
-        allFormData?.video,
-        allFormData?.imageCover,
-        movieDataRes?.id,
-        "mo",
-        "movies",
-      );
+      const formData = new FormData();
+      formData.append("formFile", allFormData?.video);
+      formData.append("formFile", allFormData?.imageCover);
+      formData.append("attachmentId", movieDataRes?.id);
+      formData.append("attachmentType", "mo");
+      formData.append("attachmentName", "movies");
 
-      console.log(
-        "HEloooooooooooooooooooooooooooooooooooooooooooooooooooooo attach response:",
-        attachRes,
-      );
-
-      // if (attachRes?.data?.status !== 0) {
-      //   throw new Error("Error uploading attachments");
-      // }
+      const attachRes = await addAttachment(formData);
+      if (attachRes?.data?.status !== 0) {
+        throw new Error("Error uploading attachments");
+      }
 
       const requestData = {
         parentId: null,
@@ -151,9 +139,6 @@ export const uploadFullProcessThunk = createAsyncThunk(
         router.replace("/(tabs)/watch");
       }, 120000);
 
-      if (!movieDataRes?.id) {
-        throw new Error("Movie data is invalid after addMovie");
-      }
       return {
         modeType: mode?.typeMode,
         movieData: movieDataRes,
@@ -164,20 +149,10 @@ export const uploadFullProcessThunk = createAsyncThunk(
       dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(false));
 
-      console.log("❌ Upload error status:", error?.response?.status);
-      console.log("❌ Upload error data:", error?.response?.data);
-      console.log("❌ Upload error message:", error?.message);
-      console.log("❌ Upload error url:", error?.config?.url);
+      console.log("❌ Upload error:", error);
+      Alert.alert("Error", error?.message || "Upload failed");
 
-      const message =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Upload failed";
-
-      Alert.alert("Error", String(message));
-
-      return rejectWithValue(String(message));
+      return rejectWithValue(error.message || "Upload failed");
     }
   },
 );
@@ -229,21 +204,15 @@ const videoSlice = createSlice({
         state.uploadStatus = "idle";
       })
       .addCase(uploadFullProcessThunk.fulfilled, (state, action) => {
-        state.isLoading = false;
-
-        if (!action.payload) {
-          state.uploadStatus = "failed";
-          state.error = "Upload completed without response data";
-          return;
-        }
+        state.uploadStatus = "success";
+        state.isLoading = false; // اضافه شد تا لودینگ متوقف شود
 
         const { movieData, inviteData, modeType } = action.payload;
 
-        state.uploadStatus = "success";
-        state.resMovieData = movieData ?? null;
-        state.movieData.movieId = movieData?.id ?? null;
+        state.resMovieData = movieData;
+        state.movieData.movieId = movieData?.id;
 
-        if (inviteData?.id) {
+        if (inviteData) {
           state.movieData.inviteId = inviteData.id;
         }
 
@@ -251,7 +220,6 @@ const videoSlice = createSlice({
           state.currentStep = 3;
         }
       })
-
       .addCase(uploadFullProcessThunk.rejected, (state, action) => {
         state.isLoading = false;
         state.uploadStatus = "failed";

@@ -11,6 +11,7 @@ import {
   YStack,
 } from "tamagui";
 import { logger } from "../utils/logger";
+import { Icon } from "./Icon";
 
 const Started = require("../assets/ranks/starter.png");
 const bronseBase1 = require("../assets/ranks/bronze.png");
@@ -34,7 +35,6 @@ interface ProfileBioProps {
 }
 
 const rankCategories = [
-  // ... (داده‌ها مشابه قبل)
   {
     title: "Starter",
     ranks: [{ name: "Starter", img: Started }],
@@ -72,7 +72,7 @@ const ProfileBio: React.FC<ProfileBioProps> = ({
               position="relative"
             >
               <Progress value={rankPercentage} h={16} bg="transparent">
-                <Progress.Indicator bg="$primaryMain" />
+                <Progress.Indicator bg="$indigoDark" />
               </Progress>
               <View
                 position="absolute"
@@ -170,12 +170,30 @@ const ProfileBio: React.FC<ProfileBioProps> = ({
         </Popover.Content>
       </Popover>
 
-      <YStack w="100%" mt="$5" alignItems="flex-start" gap="$4">
-        <Text color="$textPrimary">{bio}</Text>
-        <Text color="$textPrimary">{location}</Text>
-        <Text fontWeight="bold" color="$infoMain">
-          {website}
-        </Text>
+      <YStack w="100%" mt="$5" alignItems="flex-start" gap="$3">
+        {bio ? (
+          <Text color="$textPrimary" fontSize="$3" lineHeight={20} mb="$1">
+            {bio}
+          </Text>
+        ) : null}
+
+        {location ? (
+          <XStack alignItems="center" gap="$2">
+            <Icon name="location-on" size={16} color="#777777" />
+            <Text color="$textSecondary" fontSize="$3">
+              {location}
+            </Text>
+          </XStack>
+        ) : null}
+
+        {website ? (
+          <XStack alignItems="center" gap="$2">
+            <Icon name="language" size={16} color="#007aff" />
+            <Text fontWeight="600" color="$infoMain" fontSize="$3">
+              {website}
+            </Text>
+          </XStack>
+        ) : null}
       </YStack>
     </YStack>
   );

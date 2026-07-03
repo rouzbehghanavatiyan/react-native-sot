@@ -93,8 +93,6 @@ export const uploadToNestJS = async (
   attachmentType: string = "mo",
   attachmentName: string = "movies",
 ) => {
-  const token = await getToken();
-
   const formData = new FormData();
 
   formData.append("video", {
@@ -112,6 +110,7 @@ export const uploadToNestJS = async (
   formData.append("attachmentId", String(attachmentId));
   formData.append("attachmentType", attachmentType);
   formData.append("attachmentName", attachmentName);
+  const token = await getToken();
 
   return await axios.post(`${chatBaseURL}/api/file/uploadVideo`, formData, {
     headers: token
@@ -187,6 +186,30 @@ export const topScoreList = async () => {
 
 export const uploadVideo = async (postData: any) => {
   return await axios.post(`${chatBaseURL}/api/file/uploadVideo`, postData);
+};
+
+export const createStatus = async (postData: any) => {
+  const token = await getToken();
+
+  return await axios.post(`${chatBaseURL}/api/status/createStatus`, postData, {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  });
+};
+
+export const getStatus = async () => {
+  const token = await getToken();
+
+  return await axios.get(`${chatBaseURL}/api/status/getStatus`, {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+  });
 };
 
 export const removeComment = async (commentId: number) => {
