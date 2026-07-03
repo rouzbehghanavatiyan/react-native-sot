@@ -49,8 +49,6 @@ export default function EditVideoScreen() {
     mode,
   });
 
-  console.log("VVVVVVVVVVVVVVVVVVVV");
-
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:

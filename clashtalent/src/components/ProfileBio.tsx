@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable } from "react-native";
 import {
   Image,
@@ -10,7 +10,7 @@ import {
   XStack,
   YStack,
 } from "tamagui";
-import { logger } from "../utils/logger";
+import { getStatus } from "../services/nestServices";
 import { Icon } from "./Icon";
 
 const Started = require("../assets/ranks/starter.png");
@@ -27,9 +27,6 @@ const ruby = require("../assets/ranks/ruby.png");
 const word = require("../assets/ranks/world.png");
 
 interface ProfileBioProps {
-  bio: string;
-  location: string;
-  website: string;
   rankPercentage: number;
   rankScore: number;
 }
@@ -50,13 +47,32 @@ const rankCategories = [
 ];
 
 const ProfileBio: React.FC<ProfileBioProps> = ({
-  bio,
-  location,
-  website,
   rankScore,
   rankPercentage,
 }) => {
-  logger.info("rankPercentage rankPercentage", rankPercentage);
+  const [fields, setFields] = useState<any>();
+
+  const fetchCurrentStatus = async () => {
+    try {
+      const response = await getStatus();
+      console.log(
+        "responseresponseresponseresponseresponseresponseresponseresponseresponseresponseresponse",
+        response,
+      );
+      const { code, message, data } = response?.data;
+
+      if (code === 0) {
+        setFields(data);
+      }
+    } catch (error) {
+      console.log("Error fetching status:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentStatus();
+    console.log("VVVVVVVVVVVVVVVVVVVVVVVVVV");
+  }, []);
 
   return (
     <YStack px="$4" alignItems="center" w="100%">
@@ -171,29 +187,29 @@ const ProfileBio: React.FC<ProfileBioProps> = ({
       </Popover>
 
       <YStack w="100%" mt="$5" alignItems="flex-start" gap="$3">
-        {bio ? (
+        {fields?.bio && (
           <Text color="$textPrimary" fontSize="$3" lineHeight={20} mb="$1">
-            {bio}
+            {fields?.bio}
           </Text>
-        ) : null}
+        )}
 
-        {location ? (
+        {fields?.location && (
           <XStack alignItems="center" gap="$2">
             <Icon name="location-on" size={16} color="#777777" />
             <Text color="$textSecondary" fontSize="$3">
-              {location}
+              {fields?.location}
             </Text>
           </XStack>
-        ) : null}
+        )}
 
-        {website ? (
+        {fields?.website && (
           <XStack alignItems="center" gap="$2">
             <Icon name="language" size={16} color="#007aff" />
             <Text fontWeight="600" color="$infoMain" fontSize="$3">
-              {website}
+              {fields?.website}
             </Text>
           </XStack>
-        ) : null}
+        )}
       </YStack>
     </YStack>
   );

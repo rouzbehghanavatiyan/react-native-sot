@@ -5,7 +5,6 @@ import { usePagination } from "@/src/hook/usePagination";
 import { userAttachmentList } from "@/src/services/masterServices";
 import { useAppSelector } from "@/src/store/reduxHookType";
 import { getImageUrl } from "@/src/utils/fileHelper";
-import { logger } from "@/src/utils/logger";
 import { socketClient } from "@/src/utils/socketClient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
@@ -28,7 +27,7 @@ const Profile: React.FC = () => {
     ? getImageUrl(userIdWhantToShow?.profile)
     : getImageUrl(main?.userLogin?.profile);
 
-  const { data, isLoading, hasMore, fetchNextPage, refresh } = usePagination(
+  const { data, isLoading, hasMore, fetchNextPage } = usePagination(
     userAttachmentList,
     {
       take: 6,
@@ -71,7 +70,6 @@ const Profile: React.FC = () => {
     const score = userIdWhantToShow?.score || main?.userLogin?.score || 0;
     let calc = score <= 100 ? score : score % 100 || 100;
     setPercentage(Math.min(Math.max(calc, 1), 100));
-    logger.info("scorescorescorescorescorescore", score);
   }, [main?.userLogin?.score, userIdWhantToShow]);
 
   const renderHeader = () => (
@@ -88,10 +86,7 @@ const Profile: React.FC = () => {
       />
       <ProfileBio
         rankScore={main?.userLogin?.score}
-        bio={"This is me jenifer I am the best"}
-        location={"Tehran, Iran"}
         rankPercentage={percentage}
-        website={"http://te.me/jenifer159"}
       />
       <ProfileAchievements />
     </YStack>

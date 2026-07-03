@@ -1,8 +1,9 @@
+import AppLoading from "@/src/components/AppLoading";
 import ImageRank from "@/src/components/ImageRank";
 import MessageInput from "@/src/components/MessageInput";
 import { userMessages } from "@/src/services/masterServices";
 import { useAppSelector } from "@/src/store/reduxHookType";
-import { getImageUrl } from "@/src/utils/fileHelper";
+import { getImageUrl, mergeUniqueMessages } from "@/src/utils/fileHelper";
 import { socketClient } from "@/src/utils/socketClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useLocalSearchParams } from "expo-router";
@@ -43,6 +44,7 @@ export default function PrivateChat() {
   const isInitialLoadRef = useRef(true);
   const isLoadingMoreRef = useRef(false); // اضافه کن
   const lastLoadMoreTimeRef = useRef(0);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const initialScrollDoneRef = useRef(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -73,7 +75,7 @@ export default function PrivateChat() {
     };
 
     socketClient?.emit("send_message", message);
-    setMessages((prev) => [...prev, message]);
+    setMessages((prev) => mergeUniqueMessages([...prev, message]));
     setTitle("");
     setShowStickers(false);
     scrollToBottom();
@@ -86,10 +88,19 @@ export default function PrivateChat() {
         (data.recieveId === userIdLogin && data.sender === reciveUserId);
 
       if (!shouldShow) return;
-
       if (data.sender === userIdLogin) return;
 
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => {
+        const exists = prev.some(
+          (msg) =>
+            (data.id != null && msg.id === data.id) ||
+            (data.tempId && msg.tempId === data.tempId),
+        );
+
+        if (exists) return prev;
+        return [...prev, data];
+      });
+
       scrollToBottom();
     },
     [userIdLogin, reciveUserId],
@@ -102,8 +113,11 @@ export default function PrivateChat() {
     try {
       if (isLoadMore) {
         setIsLoadingMore(true);
-        isLoadingMoreRef.current = true; // بلافاصله block کن
+        isLoadingMoreRef.current = true;
+      } else {
+        setIsInitialLoading(true);
       }
+
       const res = await userMessages(
         userIdLogin,
         reciveUserId,
@@ -119,11 +133,11 @@ export default function PrivateChat() {
       if (isLoadMore) {
         setMessages((prev) => {
           firstItemIdRef.current = prev[0]?.id ? String(prev[0].id) : null;
-          return [...fetchedMessages, ...prev];
+          return mergeUniqueMessages([...fetchedMessages, ...prev]);
         });
       } else {
-        setMessages(fetchedMessages);
-        scrollToBottom();
+        setMessages(mergeUniqueMessages(fetchedMessages));
+        scrollToBottom(false);
       }
 
       paginationRef.current.skip += fetchedMessages.length;
@@ -133,37 +147,46 @@ export default function PrivateChat() {
       if (isLoadMore) {
         setIsLoadingMore(false);
         isLoadingMoreRef.current = false;
+      } else {
+        setIsInitialLoading(false);
       }
     }
   };
 
   useEffect(() => {
-    paginationRef.current = { skip: 0, take: 10 };
-    isInitialLoadRef.current = true; // ریست
-    setHasMore(true);
+    if (!userIdLogin || !reciveUserId) return;
 
-    if (!socketClient) return;
+    paginationRef.current = { skip: 0, take: 10 };
+    isInitialLoadRef.current = true;
+    isLoadingMoreRef.current = false;
+    initialScrollDoneRef.current = false;
+    firstItemIdRef.current = null;
+    lastLoadMoreTimeRef.current = 0;
+
+    setMessages([]);
+    setHasMore(true);
+    setIsLoadingMore(false);
 
     getMessages(false).finally(() => {
-      // بعد از لود اولیه، اجازه لود بیشتر بده
       setTimeout(() => {
         isInitialLoadRef.current = false;
-      }, 500); // کمی delay تا FlatList stabilize بشه
+      }, 700);
     });
 
-    socketClient.on("receive_message", handleReciveMessage);
+    socketClient?.on("receive_message", handleReciveMessage);
 
-    return async () => {
-      socketClient.off("receive_message", handleReciveMessage);
-      if (reciveUserId) {
-        await AsyncStorage.setItem(`message_read_${reciveUserId}`, "true");
-        socketClient.emit("mark_messages_as_read", {
-          sender: reciveUserId,
-          receiver: userIdLogin,
-        });
-      }
+    return () => {
+      socketClient?.off("receive_message", handleReciveMessage);
+
+      AsyncStorage.setItem(`message_read_${reciveUserId}`, "true");
+
+      socketClient?.emit("mark_messages_as_read", {
+        sender: reciveUserId,
+        receiver: userIdLogin,
+      });
     };
-  }, [socketClient, reciveUserId]);
+  }, [userIdLogin, reciveUserId, handleReciveMessage]);
+
   useEffect(() => {
     if (firstItemIdRef.current !== null && messages.length > 0) {
       const index = messages.findIndex(
@@ -194,10 +217,16 @@ export default function PrivateChat() {
       });
     }, 100);
   };
+  const otherUserProfile = profile || "";
 
   const renderMessage = ({ item }: { item: MessageType }) => {
     const isOwn = item.sender === userIdLogin;
-    console.log("itemitemitemitemitemitem", item);
+
+    const messageAvatar = isOwn
+      ? userProfile
+      : item.userProfile
+        ? getImageUrl(item.userProfile)
+        : otherUserProfile;
 
     return (
       <XStack
@@ -206,24 +235,44 @@ export default function PrivateChat() {
         px="$3"
         py="$2"
       >
-        {!isOwn && <ImageRank imgSrc={item.userProfile} imgSize={35} />}
+        {!isOwn && <ImageRank imgSrc={messageAvatar} imgSize={35} />}
+
         <YStack
           maxWidth="70%"
-          bg={isOwn ? "white" : "$orange5"}
+          bg={isOwn ? "white" : "$grey100"}
           borderRadius="$4"
           px="$3"
           py="$2"
           mx="$2"
         >
           <Text>{item.title}</Text>
+
           <Text fontSize={8} color="$grey400">
             {item?.time?.slice(0, 5)}
           </Text>
         </YStack>
-        {isOwn && <ImageRank imgSrc={userProfile} imgSize={35} />}
+
+        {isOwn && <ImageRank imgSrc={messageAvatar} imgSize={35} />}
       </XStack>
     );
   };
+
+  const handleLoadMore = useCallback(() => {
+    if (isInitialLoadRef.current) return;
+    if (isLoadingMoreRef.current) return;
+    if (!hasMore) return;
+
+    const now = Date.now();
+
+    if (now - lastLoadMoreTimeRef.current < 1000) return;
+
+    lastLoadMoreTimeRef.current = now;
+
+    console.log("Loading older messages...");
+
+    getMessages(true);
+  }, [hasMore, userIdLogin, reciveUserId]);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -238,54 +287,64 @@ export default function PrivateChat() {
               userProfile={profile}
               score={userScore}
             />
-            <FlatList
-              onStartReached={() => {
-                if (isInitialLoadRef.current) return;
-                const now = Date.now();
-                if (now - lastLoadMoreTimeRef.current < 1000) return;
-                lastLoadMoreTimeRef.current = now;
-                getMessages(true);
-              }}
-              ref={flatListRef}
-              data={messages}
-              keyExtractor={(item, index) => {
-                if (item.tempId) return `temp-${item.tempId}`;
-                if (item.id) return `msg-${item.id}`;
-                return `idx-${index}`;
-              }}
-              renderItem={renderMessage}
-              onStartReachedThreshold={0.1}
-              ListHeaderComponent={
-                isLoadingMore ? (
-                  <XStack justifyContent="center" py="$2">
-                    <Text color="$gray9" fontSize={12}>
-                      در حال بارگذاری...
-                    </Text>
-                  </XStack>
-                ) : null
-              }
-              contentContainerStyle={{
-                flexGrow: 1,
-                justifyContent: "flex-end",
-                paddingVertical: 10,
-              }}
-              onScrollToIndexFailed={handleScrollToIndexFailed}
-              onContentSizeChange={() => {
-                if (!initialScrollDoneRef.current && messages.length > 0) {
-                  initialScrollDoneRef.current = true;
-                  scrollToBottom(false);
-                }
-              }}
-            />
+            {isInitialLoading ? (
+              <YStack
+                flex={1}
+                alignItems="center"
+                justifyContent="center"
+                bg="$background"
+              >
+                <AppLoading />
+              </YStack>
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                keyExtractor={(item, index) => {
+                  if (item.id != null) return `msg-${item.id}`;
+                  if (item.tempId != null) return `temp-${item.tempId}`;
+                  return `idx-${index}`;
+                }}
+                renderItem={renderMessage}
+                onScroll={(event) => {
+                  const offsetY = event.nativeEvent.contentOffset.y;
 
-            <MessageInput
-              title={title}
-              setTitle={setTitle}
-              handleSendMessage={handleSendMessage}
-              showStickers={showStickers}
-              setShowStickers={setShowStickers}
-              onAttachClick={() => console.log("Attach clicked")}
-            />
+                  if (offsetY <= 80) {
+                    handleLoadMore();
+                  }
+                }}
+                scrollEventThrottle={16}
+                ListHeaderComponent={
+                  isLoadingMore ? (
+                    <XStack justifyContent="center">
+                      <AppLoading />
+                    </XStack>
+                  ) : null
+                }
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  justifyContent: "flex-end",
+                  paddingVertical: 10,
+                }}
+                onScrollToIndexFailed={handleScrollToIndexFailed}
+                onContentSizeChange={() => {
+                  if (!initialScrollDoneRef.current && messages.length > 0) {
+                    initialScrollDoneRef.current = true;
+                    scrollToBottom(false);
+                  }
+                }}
+              />
+            )}
+            {!isInitialLoading && (
+              <MessageInput
+                title={title}
+                setTitle={setTitle}
+                handleSendMessage={handleSendMessage}
+                showStickers={showStickers}
+                setShowStickers={setShowStickers}
+                onAttachClick={() => console.log("Attach clicked")}
+              />
+            )}
           </YStack>
         </KeyboardAvoidingView>
       </SafeAreaView>

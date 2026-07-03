@@ -22,7 +22,7 @@ const AppLoading: React.FC<AppLoadingProps> = ({ overlay = false }) => {
           }
         : {})}
     >
-      <ActivityIndicator />
+      <ActivityIndicator size="large" />
     </View>
   );
 };

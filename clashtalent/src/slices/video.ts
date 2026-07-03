@@ -86,6 +86,7 @@ export const uploadFullProcessThunk = createAsyncThunk(
       formData.append("attachmentName", "movies");
 
       const attachRes = await addAttachment(formData);
+
       if (attachRes?.data?.status !== 0) {
         throw new Error("Error uploading attachments");
       }

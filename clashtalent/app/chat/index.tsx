@@ -1,5 +1,6 @@
 import ImageRank from "@/src/components/ImageRank";
 import MainTitle from "@/src/components/MainTitle";
+import { allUserMessagese } from "@/src/services/masterServices";
 import { useAppSelector } from "@/src/store/reduxHookType";
 import { getImageUrl } from "@/src/utils/fileHelper";
 import { socketClient } from "@/src/utils/socketClient";
@@ -77,12 +78,13 @@ const ChatRoom: React.FC = () => {
       ...prev,
       [data.sender]: false,
     }));
-
     router.push({
-      pathname: "/privateMessage",
+      pathname: "/chat/[id]",
       params: {
         id: String(data.sender),
-        userInfo: JSON.stringify(data),
+        userName: data.userNameSender ?? "",
+        profile: getImageUrl(data) ?? "",
+        score: String(data.score ?? 0),
       },
     });
   };
@@ -97,14 +99,22 @@ const ChatRoom: React.FC = () => {
     [],
   );
 
-  const handleGetUserMessages = useCallback(async () => {
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setUserSender(mockUsers);
+  const handleGetUserMessages = async () => {
+    try {
+      setIsLoading(true);
+      const res = await allUserMessagese(userIdLogin);
       setIsLoading(false);
-    }, 500);
-  }, []);
+
+      const { data, status } = res?.data;
+      if (status === 0) {
+        console.log(data);
+
+        setUserSender(data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleReceiveMessage = useCallback(
     async (data: MessageData) => {
@@ -140,7 +150,7 @@ const ChatRoom: React.FC = () => {
 
   useEffect(() => {
     handleGetUserMessages();
-  }, [handleGetUserMessages]);
+  }, []);
 
   useEffect(() => {
     const loadStoredReadStatus = async () => {
@@ -177,7 +187,7 @@ const ChatRoom: React.FC = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <YStack flex={1} bg="$background">
-        <MainTitle title="Messages" />
+        <MainTitle title="Messages" handleBack={() => router.back()} />
         {userSender.length > 0 ? (
           userSender.map((user) => {
             const fixImage = getImageUrl(user);

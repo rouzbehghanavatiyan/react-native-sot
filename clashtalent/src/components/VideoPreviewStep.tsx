@@ -112,8 +112,6 @@ const VideoPreviewStep: React.FC<any> = ({
       trimEnd: trimRange[1],
       duration,
     });
-    console.log("VEEDASKLHDKLSCJSAIOJ");
-
     dispatch(goToStep(2));
   };
 
