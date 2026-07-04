@@ -8,10 +8,11 @@ import {
   setPaginationHomeMatch,
 } from "@/src/slices/main";
 import { useAppSelector } from "@/src/store/reduxHookType";
+import { logger } from "@/src/utils/logger";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { FlashList } from "@shopify/flash-list";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Comments from "../comments";
 
@@ -59,8 +60,6 @@ const HomeScreen: React.FC = () => {
 
         hasFetchedOnce.current = true;
 
-        console.log("API DATA ARRAY", res?.data?.data);
-
         return res?.data?.data || [];
       } catch (error) {
         hasFetchedOnce.current = true;
@@ -95,64 +94,19 @@ const HomeScreen: React.FC = () => {
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  // const onViewableItemsChanged = useRef(
-  //   ({ viewableItems }: { viewableItems: any }) => {
-  //     if (viewableItems && viewableItems.length > 0) {
-  //       const visibleItem = viewableItems[0];
-  //       if (visibleItem.index !== null) {
-  //         setCurrentIndex(visibleItem.index);
-  //         handleSlideChange(visibleItem.index);
-  //       }
-  //     }
-  //   },
-  // ).current;
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: any }) => {
+      logger.info("viewableItems", viewableItems);
 
-  // ① ref جدید اضافه کن - بعد از hasFetchedOnce
-  const hasInitiallyPlayed = useRef(false);
-
-  // ② این useEffect رو قبل از viewabilityConfig اضافه کن
-  useEffect(() => {
-    // فقط یک بار و بعد از اینکه data واقعاً لود شد اجرا میشه
-    if (hasInitiallyPlayed.current) return;
-    if (!data || data.length === 0) return;
-
-    hasInitiallyPlayed.current = true;
-
-    const firstItem = data[0];
-    // slide اول → position 0 (ویدیو بالایی) پلی بشه
-    const topVideoId = firstItem?.attachmentInserted?.attachmentId;
-    const fallbackId = firstItem?.attachmentMatched?.attachmentId;
-
-    handleVideoPlay(topVideoId || fallbackId || null);
-  }, [data, handleVideoPlay]);
-
-  // ② منطق onMomentumScrollEnd را اصلاح کن
-  const onMomentumScrollEnd = useCallback(
-    (event: any) => {
-      const offsetY = event.nativeEvent.contentOffset.y;
-      // محاسبه دقیق‌تر با floor به‌جای round
-      const index = Math.floor(offsetY / usableHeight + 0.5);
-
-      setCurrentIndex(index);
-      handleSlideChange?.(index);
-
-      const itemData = data?.[index];
-      if (!itemData) {
-        handleVideoPlay(null);
-        return;
+      if (viewableItems && viewableItems.length > 0) {
+        const visibleItem = viewableItems[0];
+        if (visibleItem.index !== null) {
+          setCurrentIndex(visibleItem.index);
+          handleSlideChange(visibleItem.index);
+        }
       }
-
-      const topVideoId = itemData?.attachmentInserted?.attachmentId;
-      const bottomVideoId = itemData?.attachmentMatched?.attachmentId;
-
-      // همیشه اول top را چک کن، اگر نبود bottom را پلی کن
-      // % 2 را حذف کن - مشکل‌ساز بود
-      const videoIdToPlay = topVideoId || bottomVideoId;
-
-      handleVideoPlay(videoIdToPlay ?? null);
     },
-    [usableHeight, data, handleSlideChange, handleVideoPlay],
-  );
+  ).current;
 
   const showInitialLoader =
     !hasFetchedOnce.current && (!data || data.length === 0);
@@ -181,12 +135,10 @@ const HomeScreen: React.FC = () => {
             keyExtractor={(item, index) =>
               item?.id?.toString() || index.toString()
             }
-            estimatedItemSize={usableHeight}
             pagingEnabled
             showsVerticalScrollIndicator={false}
             viewabilityConfig={viewabilityConfig}
-            // onViewableItemsChanged={onViewableItemsChanged}
-            onMomentumScrollEnd={onMomentumScrollEnd}
+            onViewableItemsChanged={onViewableItemsChanged}
             renderItem={({ item, index }) => (
               <View style={{ width, height: usableHeight }}>
                 <ShowWatchSlide
