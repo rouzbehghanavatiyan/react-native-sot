@@ -1,6 +1,7 @@
 import { AnyAction } from "@reduxjs/toolkit";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppDispatch } from "../store/reduxHookType";
+import { logger } from "../utils/logger";
 
 interface UseShowWatchProps {
   inviteId?: string;
@@ -120,6 +121,7 @@ export const useShowWatch = ({
   ]);
 
   const handleVideoPlay = useCallback((videoId: string) => {
+    logger.info("videoId videoId videoId", videoId);
     setOpenDropdowns({});
     setCurrentlyPlayingId((prev) => (prev === videoId ? null : videoId));
   }, []);
@@ -150,13 +152,44 @@ export const useShowWatch = ({
     [],
   );
 
+  // const handleSlideChange = useCallback(
+  //   (index: number) => {
+  //     setActiveSlideIndex(index);
+  //     setOpenDropdowns({});
+
+  //     const currentVideoId =
+  //       dataRef.current[index]?.attachmentInserted?.attachmentId;
+
+  //     if (currentVideoId) {
+  //       setCurrentlyPlayingId(currentVideoId);
+  //     }
+
+  //     const threshold = dataRef.current.length - 3;
+
+  //     if (
+  //       index >= threshold &&
+  //       paginationRef.current.hasMore &&
+  //       !isLoadingRef.current
+  //     ) {
+  //       fetchNextPage();
+  //     }
+  //   },
+  //   [fetchNextPage],
+  // );
+
   const handleSlideChange = useCallback(
     (index: number) => {
       setActiveSlideIndex(index);
       setOpenDropdowns({});
 
+      const currentItem = dataRef.current[index];
+
+      // index زیرو-بیس: 0,2,4 => اسلاید نمایشی 1,3,5 (فرد) => ویدیوی بالا
+      // index زیرو-بیس: 1,3,5 => اسلاید نمایشی 2,4,6 (زوج) => ویدیوی پایین
       const currentVideoId =
-        dataRef.current[index]?.attachmentInserted?.attachmentId;
+        index % 2 === 0
+          ? currentItem?.attachmentInserted?.attachmentId
+          : currentItem?.attachmentMatched?.attachmentId;
 
       if (currentVideoId) {
         setCurrentlyPlayingId(currentVideoId);
