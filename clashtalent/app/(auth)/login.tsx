@@ -23,7 +23,7 @@ import { Check, Eye, EyeOff } from "@tamagui/lucide-icons";
 import { Link, useRouter } from "expo-router";
 import { jwtDecode } from "jwt-decode";
 import { useState } from "react";
-import { Alert } from "react-native";
+import { Modal, Pressable } from "react-native"; // اضافه شدن Modal و Pressable
 import { Checkbox, Image, Text, View, XStack, YStack } from "tamagui";
 
 const LoginScreen: React.FC<any> = () => {
@@ -33,7 +33,13 @@ const LoginScreen: React.FC<any> = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
+
+  // استیت‌های جدید برای مودال خطای Tamagui
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
   const dispatch = useAppDispatch();
+
   const handleInputChange = (name: keyof FormValues, value: string) => {
     setFormState((prev: any) => ({
       ...prev,
@@ -66,11 +72,9 @@ const LoginScreen: React.FC<any> = () => {
         const decoded: any = jwtDecode(token);
         const userId: any = Number(Object.values(decoded)?.[1]);
 
-        // ✅ اول dispatch کن
         dispatch(RsetUserLogin({ token, userId }));
         dispatch(RsetUserId(userId));
 
-        // ✅ بعد داده‌ها را لود کن — قبل از navigate
         await Promise.all([
           categoryList().then((res) =>
             dispatch(RsetCategory(res?.data?.data || [])),
@@ -88,15 +92,25 @@ const LoginScreen: React.FC<any> = () => {
           }),
         ]);
 
-        // ✅ بعد از لود داده‌ها navigate کن
         router.replace("/(tabs)/watch");
+      } else {
+        setLoginAttempts((prev) => prev + 1);
+        setModalMessage(
+          "User not found or incorrect password. Please try again.",
+        );
+        setShowErrorModal(true);
       }
     } catch (error: any) {
       setLoginAttempts((prev) => prev + 1);
-      setErrors((prev) => ({
-        ...prev,
-        general: "Something went wrong. Please try again.",
-      }));
+
+      const status = error?.response?.status;
+      const msg =
+        status === 404 || status === 401
+          ? "User not found or incorrect password. Please try again."
+          : "Something went wrong. Please check your connection and try again.";
+
+      setModalMessage(msg);
+      setShowErrorModal(true);
     } finally {
       setLoading(false);
     }
@@ -180,12 +194,6 @@ const LoginScreen: React.FC<any> = () => {
             </View>
           </YStack>
 
-          {!!errors.general && (
-            <Text color="$errorMain" fontSize="$8" textAlign="center">
-              {errors.general}
-            </Text>
-          )}
-
           <XStack alignItems="center" justifyContent="space-between" mt="$2">
             <XStack alignItems="center" gap="$2">
               <Checkbox id="remember-me" size="$8" defaultChecked={false}>
@@ -236,7 +244,59 @@ const LoginScreen: React.FC<any> = () => {
           </XStack>
         </YStack>
       </YStack>
+
+      <Modal
+        visible={showErrorModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <Pressable
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 24,
+          }}
+          onPress={() => setShowErrorModal(false)}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 360 }}
+          >
+            <YStack
+              bg="$backgroundPaper"
+              borderRadius="$4"
+              p="$5"
+              gap={14}
+              elevation={6}
+            >
+              <YStack gap={8}>
+                <Text fontSize="$5" fontWeight="700" color="$errorMain">
+                  Login Error
+                </Text>
+                <Text fontSize="$3" color="$textSecondary" lineHeight={20}>
+                  {modalMessage}
+                </Text>
+              </YStack>
+
+              <XStack jc="flex-end">
+                <BaseButton
+                  onPress={() => setShowErrorModal(false)}
+                  bg="$primaryMain"
+                  color="white"
+                  width={80}
+                >
+                  OK
+                </BaseButton>
+              </XStack>
+            </YStack>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </YStack>
   );
 };
+
 export default LoginScreen;

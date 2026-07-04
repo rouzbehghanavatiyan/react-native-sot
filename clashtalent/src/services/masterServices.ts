@@ -12,7 +12,6 @@ export const attachmentList = async (postData: {
       subCatId: postData?.subCatId,
     },
   });
-
   return response.data;
 };
 
@@ -70,7 +69,6 @@ export const attachmentListByInviteId = async (postData: {
       inviteId: postData.inviteId,
     },
   });
-
   return res.data;
 };
 
@@ -90,16 +88,6 @@ export const addFollower = async (postData: any) => {
   return await api.post(`/addFollower`, postData);
 };
 
-export const removeLike = async (postData: any) => {
-  // const url = `${baseURL}/removeLike`;
-  // return await axios.delete(url, { data: postData });
-};
-
-export const addLike = async (postData: any) => {
-  // const url = `${baseURL}/removeLike`;
-  // return await axios.delete(url, { data: postData });
-};
-
 export const modeList = async () => {
   return await api.get(`/modeList`);
 };
@@ -108,11 +96,6 @@ export const subSubCategoryList = async (
   subCatId: number | string | null | undefined,
 ) => {
   return await api.get(`/subSubCategoryList?subCategoryId=${subCatId}`);
-};
-
-export const removeInvite = async (invId: number) => {
-  // const url = `${baseURL}/removeInvite?inviteId=${invId}`;
-  // return await axios.delete(url);
 };
 
 export const addInvite = async (postData: any) => {
@@ -137,9 +120,4 @@ export const commentList = async (movieId: number) => {
 
 export const topScoreList = async () => {
   return await api.get(`/topScoreList`);
-};
-
-export const removeComment = async (commentId: number) => {
-  // const url = `${baseURL}/removeComment?commentId=${commentId}`;
-  // return await axios.delete(url);
 };

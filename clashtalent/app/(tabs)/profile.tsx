@@ -8,7 +8,7 @@ import { getImageUrl } from "@/src/utils/fileHelper";
 import { socketClient } from "@/src/utils/socketClient";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { FlatList, RefreshControl, SafeAreaView } from "react-native";
+import { FlatList, SafeAreaView } from "react-native";
 import { Spinner, YStack } from "tamagui";
 import VideosProfileItem from "../profile/VideosProfileItem";
 
@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
     ? getImageUrl(userIdWhantToShow?.profile)
     : getImageUrl(main?.userLogin?.profile);
 
-  const { data, isLoading, hasMore, fetchNextPage, refresh } = usePagination(
+  const { data, isLoading, hasMore, fetchNextPage } = usePagination(
     userAttachmentList,
     {
       take: 6,
@@ -36,6 +36,8 @@ const Profile: React.FC = () => {
       },
     },
   );
+
+  console.log(userIdWhantToShow);
 
   useEffect(() => {
     const handleGetAddLike = (data: { userId: number; movieId: number }) => {
@@ -84,10 +86,7 @@ const Profile: React.FC = () => {
       />
       <ProfileBio
         rankScore={main?.userLogin?.score}
-        bio={"This is me jenifer I am the best"}
-        location={"Tehran, Iran"}
         rankPercentage={percentage}
-        website={"http://te.me/jenifer159"}
       />
       <ProfileAchievements />
     </YStack>
@@ -115,12 +114,12 @@ const Profile: React.FC = () => {
               </YStack>
             ) : null
           }
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading && data.length === 0}
-              onRefresh={refresh}
-            />
-          }
+          // refreshControl={
+          //   <RefreshControl
+          //     refreshing={isLoading && data.length === 0}
+          //     onRefresh={refresh}
+          //   />
+          // }
           onEndReached={async () => {
             if (hasMore && !isLoading && !isFetchingMore) {
               setIsFetchingMore(true);

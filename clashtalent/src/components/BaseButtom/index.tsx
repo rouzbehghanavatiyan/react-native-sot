@@ -6,17 +6,27 @@ import { BaseButtonProps, ColorType } from "./type";
 
 const StyledButton = styled(Button, {
   name: "BaseButton",
-
-  borderRadius: "$4",
+  borderRadius: "$3",
   borderWidth: 1,
   height: "$10",
   justifyContent: "center",
   alignItems: "center",
-
   pressStyle: {
     opacity: 0.85,
   },
 });
+
+export interface BaseButtonProps {
+  appearance?: "solid" | "outline" | "ghost";
+  colorType?: ColorType;
+  loading?: boolean;
+  fullWidth?: boolean;
+  disabled?: boolean;
+  icon?: any;
+  bordered?: boolean;
+  noBg?: boolean;
+  children?: React.ReactNode;
+}
 
 const getVariantStyles = (
   appearance: Appearance,
@@ -57,6 +67,8 @@ export const BaseButton = forwardRef<any, BaseButtonProps>(
       fullWidth = false,
       disabled,
       icon,
+      bordered = false,
+      noBg = false,
       children,
       ...rest
     },
@@ -72,6 +84,10 @@ export const BaseButton = forwardRef<any, BaseButtonProps>(
         disabled={isDisabled}
         width={fullWidth ? "100%" : undefined}
         opacity={isDisabled ? 0.6 : 1}
+        borderWidth={bordered ? 1 : 0}
+        backgroundColor={noBg ? "transparent" : styles.backgroundColor}
+        borderColor={bordered ? styles.borderColor : "transparent"}
+        color={styles.color}
         icon={
           loading ? (
             <Spinner color={appearance === "solid" ? "white" : color.text} />
@@ -79,10 +95,8 @@ export const BaseButton = forwardRef<any, BaseButtonProps>(
             icon
           )
         }
-        {...styles}
         {...rest}
       >
-        
         {children}
       </StyledButton>
     );

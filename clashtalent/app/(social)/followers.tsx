@@ -5,7 +5,6 @@ import { useFollow } from "@/src/hook/useFollow";
 import { followerList } from "@/src/services/masterServices";
 import { RsetAllFollowerList } from "@/src/slices/main";
 import { useAppDispatch, useAppSelector } from "@/src/store/reduxHookType";
-import asyncWrapper from "@/src/utils/asyncWrapper";
 import { getImageUrl } from "@/src/utils/fileHelper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -27,24 +26,30 @@ const FollowerScreen = () => {
   const { isFollowed, toggleFollow, loadingId } = useFollow(userIdLogin);
   const userIdFromLocation = params?.id;
 
-  const handleAllFollowers = asyncWrapper(
-    async () => {
+  const handleAllFollowers = async () => {
+    try {
       setIsLoading(true);
+
       const targetUserId = userIdFromLocation || userIdLogin;
       if (!targetUserId) return;
+
       const res = await followerList(targetUserId);
-      const { status, data } = res?.data;
+      const { status, data } = res?.data || {};
 
       if (status === 0) {
-        dispatch(RsetAllFollowerList(data));
+        dispatch(RsetAllFollowerList(data || []));
       }
-    },
-    () => setIsLoading(false),
-  );
+    } catch (error: any) {
+      console.log("followerList error:", error?.message);
+      console.log("followerList response:", error?.response?.data);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     handleAllFollowers();
-  }, []);
+  }, [userIdFromLocation, userIdLogin]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>

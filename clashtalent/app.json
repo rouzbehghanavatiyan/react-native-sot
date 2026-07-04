@@ -13,25 +13,31 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
-      "windowSoftInputMode": "adjustResize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/images/android-icon-foreground.png",
-        "backgroundImage": "./src/assets/images/android-icon-background.png"
+        "foregroundImage": "./src/assets/images/logocircle.png",
+        "backgroundImage": "./src/assets/images/bronze-3.png"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.alpoarmansorganization.clashtalent"
+      "package": "clashtalent.com",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
       "favicon": "./src/assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#ffffff"
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./src/assets/images/splash-icon.png",
+          "image": "./src/assets/images/logocircle.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -40,6 +46,13 @@
       "expo-font",
       "expo-video",
       "react-native-compressor"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b50a5b2e-c16d-4cda-962e-24676e8fd1e1"
+      }
+    },
+    "owner": "rouzbehghanavatiyan"
   }
 }

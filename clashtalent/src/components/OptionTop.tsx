@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet } from "react-native";
-import { Separator, Text, View, XStack } from "tamagui";
+import { Text, View, XStack } from "tamagui";
 import { getImageUrl } from "../utils/fileHelper";
 import Follows from "./Follows";
 import ImageRank from "./ImageRank";
@@ -46,54 +46,37 @@ const OptionTop: React.FC<OptionTopProps> = ({
 
   const userInfo =
     positionVideo === 0 ? video?.userInserted : video?.userMatched;
-
   const checkMyVideo =
     userInfo?.id && currentUserId ? userInfo.id !== currentUserId : false;
-
   const userScore =
     positionVideo === 0 ? video?.scoreInserted : video?.scoreMatched;
 
   useEffect(() => {
-    const getInitialFollowStatus = () => {
-      try {
-        if (positionVideo === 0) {
-          return video?.isFollowedMeInserted === true;
-        } else {
-          return video?.isFollowedMeMatched === true;
-        }
-      } catch (error) {
-        console.error("Error getting follow status:", error);
-        return false;
-      }
-    };
-
-    setLocalIsFollowed(getInitialFollowStatus());
+    const isFollowed =
+      positionVideo === 0
+        ? video?.isFollowedMeInserted
+        : video?.isFollowedMeMatched;
+    setLocalIsFollowed(!!isFollowed);
   }, [video, positionVideo]);
 
-  const handleFallowClick = async (video: any, position: number) => {
+  const handleFallowClick = async () => {
     if (isLoadingFollow) return;
     const userIdFollow =
-      position === 0 ? video?.userInserted?.id : video?.userMatched?.id;
+      positionVideo === 0 ? video?.userInserted?.id : video?.userMatched?.id;
     const postData = {
       userId: userIdLogin || null,
       followerId: userIdFollow || null,
     };
-
-    const newFollowStatus = !localIsFollowed;
-
     try {
       setIsLoadingFollow(true);
-
       if (localIsFollowed) {
         await removeFollower(postData);
       } else {
         await addFollower(postData);
       }
-
-      setLocalIsFollowed(newFollowStatus);
+      setLocalIsFollowed(!localIsFollowed);
     } catch (error) {
       console.error("Error in follow operation:", error);
-      setLocalIsFollowed(localIsFollowed);
     } finally {
       setIsLoadingFollow(false);
     }
@@ -113,45 +96,22 @@ const OptionTop: React.FC<OptionTopProps> = ({
     });
   };
 
-  // ----- گزارش کاربر -----
   const handleReport = () => {
     setMenuOpen(false);
-    if (!userInfo?.id) return;
-
-    // اینجا می‌تونید مودال ریپورت رو باز کنید یا API ریپورت رو صدا بزنید
-    console.log("Report user:", userInfo.id);
+    console.log("Report user:", userInfo?.id);
   };
 
-  // ----- ترکیب آیتم‌های ثابت با آیتم‌های دینامیک قبلی -----
   const getMenuItems = () => {
-    let items: any[] = [];
-
-    try {
-      items =
-        dropdownItems && typeof dropdownItems === "function"
-          ? dropdownItems(video)
-          : [];
-    } catch (error) {
-      console.error("Error getting dropdown items:", error);
-    }
-
     const customItems = [
-      {
-        label: "Send Message",
-        icon: "chat",
-        onClick: handleSendMessage,
-      },
-      {
-        label: "Report",
-        icon: "flag",
-        onClick: handleReport,
-      },
+      { label: "Send Message", icon: "chat", onClick: handleSendMessage },
+      { label: "Report", icon: "flag", onClick: handleReport },
+      { label: "Save", icon: "grade", onClick: handleReport },
+      // { label: "duel", icon: "handshake", onClick: handleReport },
     ];
-
-    return items.length > 0
-      ? [...customItems, { divider: true }, ...items]
-      : customItems;
+    return { items: customItems };
   };
+
+  const isTopPosition = positionVideo === 0;
 
   return (
     <View position="absolute" top={0} left={0} right={0} zIndex={1}>
@@ -181,7 +141,7 @@ const OptionTop: React.FC<OptionTopProps> = ({
             {checkMyVideo && (
               <Follows
                 title={localIsFollowed ? "Unfollow" : "Follow"}
-                onFollowClick={() => handleFallowClick(video, positionVideo)}
+                onFollowClick={handleFallowClick}
                 bgColor="white"
               />
             )}
@@ -204,10 +164,20 @@ const OptionTop: React.FC<OptionTopProps> = ({
                   onRequestClose={() => setMenuOpen(false)}
                 >
                   <Pressable
-                    style={styles.backdrop}
+                    style={[
+                      styles.backdrop,
+                      !isTopPosition && styles.backdropCenter,
+                      // اگر 0 نیست، استایل وسط را اضافه کن
+                    ]}
                     onPress={() => setMenuOpen(false)}
                   >
-                    <View style={styles.menuContainer}>
+                    <View
+                      style={
+                        isTopPosition
+                          ? styles.menuContainerTop
+                          : styles.menuContainerCenter
+                      }
+                    >
                       <View
                         backgroundColor="white"
                         borderRadius={10}
@@ -217,21 +187,14 @@ const OptionTop: React.FC<OptionTopProps> = ({
                         p="$2"
                         elevationAndroid={4}
                       >
-                        {getMenuItems().map((item: any, index: number) => {
-                          if (item.divider) {
-                            return (
-                              <Separator
-                                key={`divider-${index}`}
-                                my="$2"
-                                w="100%"
-                              />
-                            );
-                          }
-                          return (
+                        {getMenuItems().items.map(
+                          (
+                            item: any,
+                            index: number, // اصلاح باگ .items.map
+                          ) => (
                             <View
                               key={index}
                               onPress={item.onClick}
-                              cursor="pointer"
                               p="$2"
                               pressStyle={{
                                 backgroundColor: "$backgroundHover",
@@ -251,8 +214,8 @@ const OptionTop: React.FC<OptionTopProps> = ({
                                 </Text>
                               </XStack>
                             </View>
-                          );
-                        })}
+                          ),
+                        )}
                       </View>
                     </View>
                   </Pressable>
@@ -271,10 +234,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.15)",
   },
-  menuContainer: {
+  backdropCenter: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuContainerTop: {
     position: "absolute",
     top: 50,
-    right: 12,
+    right: 34,
+  },
+  menuContainerCenter: {
+    position: "absolute",
+    top: 410,
+    right: 34,
   },
 });
 

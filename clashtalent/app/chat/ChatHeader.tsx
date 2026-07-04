@@ -39,7 +39,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         </Pressable>
       </View>
 
-      <View flex={5}>
+      <View flex={7}>
         <ImageRank
           userName={userName || "Unknown User"}
           imgSrc={userProfile}

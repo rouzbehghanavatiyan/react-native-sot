@@ -70,7 +70,10 @@ export default function VideoSection({
 
       <View style={styles.videoContainer}>
         <View style={styles.videoCenter}>
-          <CustomVideo player={player} />
+          <CustomVideo
+            handleVideo={() => console.log("clicked")}
+            player={player}
+          />
           <OptionBottom
             userIdLogin={userIdLogin}
             video={video}

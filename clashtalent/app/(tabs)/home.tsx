@@ -8,11 +8,10 @@ import {
   setPaginationHomeMatch,
 } from "@/src/slices/main";
 import { useAppSelector } from "@/src/store/reduxHookType";
-import { logger } from "@/src/utils/logger";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { FlashList } from "@shopify/flash-list";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Comments from "../comments";
 
@@ -26,22 +25,21 @@ const HomeScreen: React.FC = () => {
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const usableHeight: any = height - headerHeight - tabBarHeight;
+
   const [showComments, setShowComments] = useState(false);
-  const [commentInfo, setCommentInfo] = useState<any>(null);
   const [commentPosition, setCommentPosition] = useState(0);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
 
-  console.log("Home render showComments:", showComments);
-  console.log("selectedVideo:", selectedVideo);
-  console.log("commentInfo:", commentInfo);
-  console.log("commentPosition:", commentPosition);
-
   const handleOpenComments = useCallback((video: any, position: number) => {
-    console.log("handleOpenComments called", { video, position });
     setSelectedVideo(video);
-    setCommentInfo(video);
     setCommentPosition(position ?? 0);
     setShowComments(true);
+  }, []);
+
+  const handleCloseComments = useCallback(() => {
+    setShowComments(false);
+    setSelectedVideo(null);
+    setCommentPosition(0);
   }, []);
 
   const customFetchNextPage = useCallback(
@@ -97,19 +95,64 @@ const HomeScreen: React.FC = () => {
     itemVisiblePercentThreshold: 50,
   }).current;
 
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: any }) => {
-      if (viewableItems && viewableItems.length > 0) {
-        const visibleItem = viewableItems[0];
-        if (visibleItem.index !== null) {
-          setCurrentIndex(visibleItem.index);
-          handleSlideChange(visibleItem.index);
-        }
-      }
-    },
-  ).current;
+  // const onViewableItemsChanged = useRef(
+  //   ({ viewableItems }: { viewableItems: any }) => {
+  //     if (viewableItems && viewableItems.length > 0) {
+  //       const visibleItem = viewableItems[0];
+  //       if (visibleItem.index !== null) {
+  //         setCurrentIndex(visibleItem.index);
+  //         handleSlideChange(visibleItem.index);
+  //       }
+  //     }
+  //   },
+  // ).current;
 
-  logger.info("home data", data);
+  // ① ref جدید اضافه کن - بعد از hasFetchedOnce
+  const hasInitiallyPlayed = useRef(false);
+
+  // ② این useEffect رو قبل از viewabilityConfig اضافه کن
+  useEffect(() => {
+    // فقط یک بار و بعد از اینکه data واقعاً لود شد اجرا میشه
+    if (hasInitiallyPlayed.current) return;
+    if (!data || data.length === 0) return;
+
+    hasInitiallyPlayed.current = true;
+
+    const firstItem = data[0];
+    // slide اول → position 0 (ویدیو بالایی) پلی بشه
+    const topVideoId = firstItem?.attachmentInserted?.attachmentId;
+    const fallbackId = firstItem?.attachmentMatched?.attachmentId;
+
+    handleVideoPlay(topVideoId || fallbackId || null);
+  }, [data, handleVideoPlay]);
+
+  // ② منطق onMomentumScrollEnd را اصلاح کن
+  const onMomentumScrollEnd = useCallback(
+    (event: any) => {
+      const offsetY = event.nativeEvent.contentOffset.y;
+      // محاسبه دقیق‌تر با floor به‌جای round
+      const index = Math.floor(offsetY / usableHeight + 0.5);
+
+      setCurrentIndex(index);
+      handleSlideChange?.(index);
+
+      const itemData = data?.[index];
+      if (!itemData) {
+        handleVideoPlay(null);
+        return;
+      }
+
+      const topVideoId = itemData?.attachmentInserted?.attachmentId;
+      const bottomVideoId = itemData?.attachmentMatched?.attachmentId;
+
+      // همیشه اول top را چک کن، اگر نبود bottom را پلی کن
+      // % 2 را حذف کن - مشکل‌ساز بود
+      const videoIdToPlay = topVideoId || bottomVideoId;
+
+      handleVideoPlay(videoIdToPlay ?? null);
+    },
+    [usableHeight, data, handleSlideChange, handleVideoPlay],
+  );
 
   const showInitialLoader =
     !hasFetchedOnce.current && (!data || data.length === 0);
@@ -119,7 +162,7 @@ const HomeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {showInitialLoader ? (
-        <VideoSkeleton count={4} section="itsHome" isSwapper={false} />
+        <VideoSkeleton count={1} section="itsHome" isSwapper={false} />
       ) : showEmptyState ? (
         <View style={styles.emptyWrapper}>
           <View style={styles.emptyCard}>
@@ -134,13 +177,16 @@ const HomeScreen: React.FC = () => {
         <View style={{ flex: 1, width, height: usableHeight }}>
           <FlashList
             data={data || []}
+            extraData={currentlyPlayingId}
             keyExtractor={(item, index) =>
               item?.id?.toString() || index.toString()
             }
+            estimatedItemSize={usableHeight}
             pagingEnabled
             showsVerticalScrollIndicator={false}
             viewabilityConfig={viewabilityConfig}
-            onViewableItemsChanged={onViewableItemsChanged}
+            // onViewableItemsChanged={onViewableItemsChanged}
+            onMomentumScrollEnd={onMomentumScrollEnd}
             renderItem={({ item, index }) => (
               <View style={{ width, height: usableHeight }}>
                 <ShowWatchSlide
@@ -164,23 +210,20 @@ const HomeScreen: React.FC = () => {
           />
         </View>
       )}
-      <View
-        style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}
-        pointerEvents={showComments ? "auto" : "none"}
-      >
-        <Comments
-          visible={showComments}
-          onClose={() => {
-            setShowComments(false);
-            setCommentInfo(null);
-            setSelectedVideo(null);
-            setCommentPosition(0);
-          }}
-          video={commentInfo}
-          positionVideo={commentPosition}
-          userIdLogin={userIdLogin}
-        />
-      </View>
+      {showComments && (
+        <View
+          style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}
+          pointerEvents="auto"
+        >
+          <Comments
+            visible={showComments}
+            onClose={handleCloseComments}
+            video={selectedVideo}
+            positionVideo={commentPosition}
+            userIdLogin={userIdLogin}
+          />
+        </View>
+      )}
     </View>
   );
 };
