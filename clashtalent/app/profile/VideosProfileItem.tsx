@@ -9,8 +9,9 @@ const VIDEO_HEIGHT = 500;
 const ITEM_HEIGHT = VIDEO_HEIGHT * 2;
 
 export default function VideosProfileItem({
-  onPlayChange,
+  endTime,
   video,
+  videoLikes,
   activeVideoId,
   isActive = true,
   onPlay,
@@ -74,6 +75,7 @@ export default function VideosProfileItem({
               video={video}
               width={VIDEO_WIDTH}
               height={VIDEO_HEIGHT}
+              videoLikes={videoLikes}
               attachment={section.attachment}
               positionVideo={section.position}
               score={section.score}
@@ -110,3 +112,4 @@ const styles = StyleSheet.create({
     // borderBottomColor: "#111",
   },
 });
+`1`;

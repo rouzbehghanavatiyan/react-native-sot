@@ -94,6 +94,6 @@ const styles = StyleSheet.create({
     position: "relative",
     flex: 1,
     borderBottomWidth: 1,
-    borderBottomColor: "#111",
+    borderBottomColor: "#000000",
   },
 });

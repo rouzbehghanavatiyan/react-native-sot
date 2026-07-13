@@ -4,8 +4,8 @@ import { Alert, TouchableOpacity } from "react-native";
 import { Text, View, XStack } from "tamagui";
 import { addLike, removeLike } from "../services/masterServices";
 import { useAppDispatch } from "../store/reduxHookType";
-import { Icon } from "./Icon";
 import { socketClient } from "../utils/socketClient";
+import { Icon } from "./Icon";
 
 interface OptionBottomProps {
   handleToggleComments: () => void;
@@ -206,7 +206,7 @@ const OptionBottom: React.FC<OptionBottomProps> = ({
                   )}
                 </TouchableOpacity>
               )}
-              {!endTime && localLikeCount !== undefined && movieId && (
+              {endTime === undefined && (
                 <XStack gap={1} alignItems="center">
                   <Text margin={2} pt={1} color="gray" fontSize="$5">
                     {localLikeCount}

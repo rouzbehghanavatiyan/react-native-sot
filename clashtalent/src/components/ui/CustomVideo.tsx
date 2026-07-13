@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: 1,
     width: "100%",
-    backgroundColor: "#444",
+    backgroundColor: "rgba(255,255,255,0.45)",
   },
 
   progress: {

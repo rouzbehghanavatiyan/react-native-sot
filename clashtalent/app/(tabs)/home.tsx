@@ -143,7 +143,6 @@ const HomeScreen: React.FC = () => {
               <View style={{ width, height: usableHeight }}>
                 <ShowWatchSlide
                   showLiked={false}
-                  endTime={false}
                   showScore
                   showResult
                   showCountLiked

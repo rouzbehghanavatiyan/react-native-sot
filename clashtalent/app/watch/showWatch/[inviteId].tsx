@@ -1,3 +1,4 @@
+import { Icon } from "@/src/components/Icon";
 import ShowWatchSlide from "@/src/components/VideoSlide";
 import { attachmentListByInviteId } from "@/src/services/masterServices";
 import {
@@ -7,6 +8,7 @@ import {
   setPaginationShowWatch,
 } from "@/src/slices/main";
 import { useAppDispatch, useAppSelector } from "@/src/store/reduxHookType";
+import { logger } from "@/src/utils/logger";
 import { useLocalSearchParams } from "expo-router";
 import React, {
   useCallback,
@@ -22,6 +24,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -110,38 +113,51 @@ export default function ShowWatchScreen() {
     [],
   );
 
+  logger.info("datadatadatadatadatadatadata", data?.icon);
+
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={data}
-        keyExtractor={(item, index) => `${item?.id ?? index}`}
-        renderItem={({ item, index }) => (
-          <View style={styles.page}>
-            <ShowWatchSlide
-              video={item}
-              index={index}
-              isActive={currentIndex === index}
-            />
-          </View>
-        )}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToAlignment="start"
-        getItemLayout={(_, index) => ({
-          length: SCREEN_HEIGHT,
-          offset: SCREEN_HEIGHT * index,
-          index,
-        })}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        onEndReached={() => fetchVideos(false)}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loading ? <ActivityIndicator size="small" color="#fff" /> : null
-        }
-      />
-    </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
+      <View style={styles.container}>
+        <FlatList
+          data={data}
+          keyExtractor={(item, index) => `${item?.id ?? index}`}
+          renderItem={({ item, index }) => (
+            <View style={styles.page}>
+              <ShowWatchSlide
+                showLiked={true}
+                video={item}
+                endTime
+                index={index}
+                isActive={currentIndex === index}
+              />
+              <View style={styles.centerIcon}>
+                <Icon
+                  name={item?.icon}
+                  color="rgba(255,255,255,0.45)"
+                  size={20}
+                />
+              </View>
+            </View>
+          )}
+          pagingEnabled
+          showsVerticalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToAlignment="start"
+          getItemLayout={(_, index) => ({
+            length: SCREEN_HEIGHT,
+            offset: SCREEN_HEIGHT * index,
+            index,
+          })}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          onEndReached={() => fetchVideos(false)}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loading ? <ActivityIndicator size="small" color="#fff" /> : null
+          }
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -153,5 +169,22 @@ const styles = StyleSheet.create({
   page: {
     height: SCREEN_HEIGHT,
     backgroundColor: "#000",
+  },
+  centerIcon: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    zIndex: 999,
+    width: 40,
+    height: 40,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+
+    transform: [{ translateX: -20 }, { translateY: -20 }],
+
+    backgroundColor: "rgba(0,0,0,0.25)", // اختیاری
   },
 });

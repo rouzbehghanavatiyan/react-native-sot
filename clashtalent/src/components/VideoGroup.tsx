@@ -6,6 +6,7 @@ const VideoGroup = ({ group, onPress }: any) => {
   const imageBottom = getImageUrl(group?.attachmentMatched);
 
   return (
+    // <SafeAreaView style={{ flex: 1 }}>
     <TouchableOpacity style={styles.container} onPress={onPress}>
       {group?.icon && (
         <View style={styles.iconWrapper}>
@@ -21,6 +22,7 @@ const VideoGroup = ({ group, onPress }: any) => {
         style={styles.imageBottom}
       />
     </TouchableOpacity>
+    // </SafeAreaView>
   );
 };
 

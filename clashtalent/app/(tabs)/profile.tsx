@@ -101,6 +101,7 @@ const Profile: React.FC = () => {
           renderItem={({ item }) => (
             <VideosProfileItem
               activeVideoId={activeVideoId}
+              endTime={false}
               onPlay={(id: string | null) => setActiveVideoId(id)}
               video={item}
               videoLikes={videoLikes}
