@@ -71,6 +71,8 @@ export const uploadFullProcessThunk = createAsyncThunk(
         modeId: 3,
       };
 
+      logger.info("postData postData postData", postData);
+
       const movieRes = await addMovie(postData);
       const movieDataRes = movieRes?.data?.data;
 
@@ -84,8 +86,13 @@ export const uploadFullProcessThunk = createAsyncThunk(
       formData.append("attachmentId", movieDataRes?.id);
       formData.append("attachmentType", "mo");
       formData.append("attachmentName", "movies");
-
+      formData.append("width", "300");
+      formData.append("height", "300");
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}:`, pair[1]);
+      }
       const attachRes = await addAttachment(formData);
+      logger.info("attachRes attachRes attachRes", attachRes);
 
       if (attachRes?.data?.status !== 0) {
         throw new Error("Error uploading attachments");
