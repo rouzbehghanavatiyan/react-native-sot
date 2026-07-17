@@ -19,6 +19,9 @@ export default function ShowWatchSlide({
   showLiked,
   showCountLiked,
 }: any) {
+  console.log("video?.isLikedInserted", video?.userInserted?.userName);
+  console.log("video?.isLikedInserted", video?.isLikedInserted);
+
   const resultInserted =
     video?.likeInserted > video?.likeMatched
       ? "Win"

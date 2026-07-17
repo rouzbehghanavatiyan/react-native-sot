@@ -2,10 +2,11 @@ import { addFollower, removeFollower } from "@/src/services/masterServices";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Modal, Pressable, StyleSheet } from "react-native";
-import { Text, View, XStack } from "tamagui";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Pressable } from "react-native";
+import { View, XStack } from "tamagui";
 import { getImageUrl } from "../utils/fileHelper";
+import DropDownOption, { DropDownItem } from "./DropDownOption";
 import Follows from "./Follows";
 import ImageRank from "./ImageRank";
 
@@ -34,6 +35,16 @@ const OptionTop: React.FC<OptionTopProps> = ({
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const currentUserId = main?.userLogin?.user?.id;
+  const moreButtonRef = useRef<any>(null);
+  const [anchor, setAnchor] = useState<any>(null);
+
+  const handleOpenMenu = () => {
+    // موقعیت واقعی آیکون more-vert رو نسبت به صفحه (window) اندازه می‌گیریم
+    moreButtonRef.current?.measureInWindow((x, y, width, height) => {
+      setAnchor({ x, y, width, height });
+      setMenuOpen(true);
+    });
+  };
 
   const profile =
     positionVideo === 0
@@ -83,23 +94,50 @@ const OptionTop: React.FC<OptionTopProps> = ({
   };
 
   const handleSendMessage = () => {
-    setMenuOpen(false);
     if (!userInfo?.id) return;
+
     router.push({
       pathname: `/chat/${userInfo.id}`,
       params: {
-        userId: userInfo.id,
+        userId: String(userInfo.id),
         userName: userInfo?.userName || "",
-        score: userScore || "",
+        score: String(userScore || ""),
         profile: profile || "",
       },
     });
   };
 
   const handleReport = () => {
-    setMenuOpen(false);
-    console.log("Report user:", userInfo?.id);
+    if (!userInfo?.id) return;
+
+    console.log("Report user:", userInfo.id);
   };
+
+  const handleSave = () => {
+    console.log("Save video:", video);
+  };
+
+  const menuItems = useMemo<DropDownItem[]>(
+    () => [
+      {
+        label: "Send Message",
+        icon: "chat",
+        onPress: handleSendMessage,
+      },
+      {
+        label: "Save",
+        icon: "grade",
+        onPress: handleSave,
+      },
+      {
+        label: "Report",
+        icon: "flag",
+        onPress: handleReport,
+        danger: true,
+      },
+    ],
+    [userInfo?.id, userInfo?.userName, userScore, profile, video],
+  );
 
   const getMenuItems = () => {
     const customItems = [
@@ -149,77 +187,21 @@ const OptionTop: React.FC<OptionTopProps> = ({
           <View flex={1} alignItems="flex-end">
             {checkMyVideo && (
               <>
-                <Pressable
-                  hitSlop={10}
-                  style={{ padding: 4 }}
-                  onPress={() => setMenuOpen(true)}
-                >
-                  <MaterialIcons name="more-vert" size={28} color="white" />
-                </Pressable>
-
-                <Modal
-                  visible={menuOpen}
-                  transparent
-                  animationType="fade"
-                  onRequestClose={() => setMenuOpen(false)}
-                >
+                <View ref={moreButtonRef} collapsable={false}>
                   <Pressable
-                    style={[
-                      styles.backdrop,
-                      !isTopPosition && styles.backdropCenter,
-                      // اگر 0 نیست، استایل وسط را اضافه کن
-                    ]}
-                    onPress={() => setMenuOpen(false)}
+                    hitSlop={10}
+                    style={{ padding: 4 }}
+                    onPress={handleOpenMenu}
                   >
-                    <View
-                      style={
-                        isTopPosition
-                          ? styles.menuContainerTop
-                          : styles.menuContainerCenter
-                      }
-                    >
-                      <View
-                        backgroundColor="white"
-                        borderRadius={10}
-                        borderWidth={1}
-                        borderColor="#E5E7EB"
-                        w={190}
-                        p="$2"
-                        elevationAndroid={4}
-                      >
-                        {getMenuItems().items.map(
-                          (
-                            item: any,
-                            index: number, // اصلاح باگ .items.map
-                          ) => (
-                            <View
-                              key={index}
-                              onPress={item.onClick}
-                              p="$2"
-                              pressStyle={{
-                                backgroundColor: "$backgroundHover",
-                              }}
-                              borderRadius="$2"
-                            >
-                              <XStack gap="$3" alignItems="center" w="100%">
-                                {item.icon && (
-                                  <MaterialIcons
-                                    name={item.icon}
-                                    size={20}
-                                    color="#4b5563"
-                                  />
-                                )}
-                                <Text fontSize="$4" color="$textPrimary">
-                                  {item.label}
-                                </Text>
-                              </XStack>
-                            </View>
-                          ),
-                        )}
-                      </View>
-                    </View>
+                    <MaterialIcons name="more-vert" size={28} color="white" />
                   </Pressable>
-                </Modal>
+                </View>
+                <DropDownOption
+                  visible={menuOpen}
+                  onClose={() => setMenuOpen(false)}
+                  items={menuItems}
+                  anchor={anchor}
+                />
               </>
             )}
           </View>
@@ -228,26 +210,5 @@ const OptionTop: React.FC<OptionTopProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.15)",
-  },
-  backdropCenter: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  menuContainerTop: {
-    position: "absolute",
-    top: 50,
-    right: 34,
-  },
-  menuContainerCenter: {
-    position: "absolute",
-    top: 410,
-    right: 34,
-  },
-});
 
 export default OptionTop;

@@ -1,4 +1,5 @@
 import { Icon } from "@/src/components/Icon";
+import VideoSkeleton from "@/src/components/VideoSkeleton";
 import ShowWatchSlide from "@/src/components/VideoSlide";
 import { attachmentListByInviteId } from "@/src/services/masterServices";
 import {
@@ -8,7 +9,6 @@ import {
   setPaginationShowWatch,
 } from "@/src/slices/main";
 import { useAppDispatch, useAppSelector } from "@/src/store/reduxHookType";
-import { logger } from "@/src/utils/logger";
 import { useLocalSearchParams } from "expo-router";
 import React, {
   useCallback,
@@ -38,6 +38,7 @@ export default function ShowWatchScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const loadingRef = useRef(false);
   const paginationRef = useRef(pagination);
+  const hasFetchedOnce = useRef(false);
 
   const fetchVideos = useCallback(
     async (reset = false) => {
@@ -63,7 +64,7 @@ export default function ShowWatchScreen() {
           take: currentTake,
           inviteId: inviteIdNumber,
         });
-
+        hasFetchedOnce.current = true;
         const newData = res?.data || [];
 
         if (reset) {
@@ -113,50 +114,55 @@ export default function ShowWatchScreen() {
     [],
   );
 
-  logger.info("datadatadatadatadatadatadata", data?.icon);
+  const showInitialLoader =
+    !hasFetchedOnce.current && (!data || data.length === 0);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-      <View style={styles.container}>
-        <FlatList
-          data={data}
-          keyExtractor={(item, index) => `${item?.id ?? index}`}
-          renderItem={({ item, index }) => (
-            <View style={styles.page}>
-              <ShowWatchSlide
-                showLiked={true}
-                video={item}
-                endTime
-                index={index}
-                isActive={currentIndex === index}
-              />
-              <View style={styles.centerIcon}>
-                <Icon
-                  name={item?.icon}
-                  color="rgba(255,255,255,0.45)"
-                  size={20}
+      {showInitialLoader ? (
+        <VideoSkeleton count={1} section="itsShowWatch" isSwapper={false} />
+      ) : (
+        <View style={styles.container}>
+          <FlatList
+            data={data}
+            keyExtractor={(item, index) => `${item?.id ?? index}`}
+            renderItem={({ item, index }) => (
+              <View style={styles.page}>
+                <ShowWatchSlide
+                  showLiked={true}
+                  video={item}
+                  endTime
+                  index={index}
+                  isActive={currentIndex === index}
                 />
+                <View style={styles.centerIcon}>
+                  <Icon
+                    name={item?.icon}
+                    color="rgba(255,255,255,0.45)"
+                    size={20}
+                  />
+                </View>
               </View>
-            </View>
-          )}
-          pagingEnabled
-          showsVerticalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToAlignment="start"
-          getItemLayout={(_, index) => ({
-            length: SCREEN_HEIGHT,
-            offset: SCREEN_HEIGHT * index,
-            index,
-          })}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
-          onEndReached={() => fetchVideos(false)}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            loading ? <ActivityIndicator size="small" color="#fff" /> : null
-          }
-        />
-      </View>
+            )}
+            pagingEnabled
+            showsVerticalScrollIndicator={false}
+            decelerationRate="fast"
+            snapToAlignment="start"
+            getItemLayout={(_, index) => ({
+              length: SCREEN_HEIGHT,
+              offset: SCREEN_HEIGHT * index,
+              index,
+            })}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+            onEndReached={() => fetchVideos(false)}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              loading ? <ActivityIndicator size="small" color="#fff" /> : null
+            }
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 }

@@ -2,7 +2,6 @@ import { Icon } from "@/src/components/Icon";
 import { addComment, commentList } from "@/src/services/masterServices";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -13,6 +12,7 @@ import {
 } from "react-native";
 import { Text, View, XStack, YStack } from "tamagui";
 // import { addComment, getCommentList } from "../services/masterServices";
+import AppLoading from "@/src/components/AppLoading";
 import ImageRank from "@/src/components/ImageRank";
 import { useAppSelector } from "@/src/store/reduxHookType";
 import { getImageUrl } from "@/src/utils/fileHelper";
@@ -221,7 +221,6 @@ const Comments: React.FC<CommentsProps> = ({
                       <Icon name="close" color="white" size={22} />
                     </TouchableOpacity>
                   </XStack>
-
                   <View flex={1}>
                     {loading && comments.length === 0 ? (
                       <View
@@ -229,30 +228,11 @@ const Comments: React.FC<CommentsProps> = ({
                         justifyContent="center"
                         alignItems="center"
                       >
-                        <ActivityIndicator color="#fff" />
+                        <AppLoading />
                       </View>
                     ) : (
                       <>
-                        {loading && comments.length > 0 && (
-                          <View
-                            position="absolute"
-                            top={8}
-                            left={0}
-                            right={0}
-                            zIndex={10}
-                            alignItems="center"
-                            pointerEvents="none"
-                          >
-                            <View
-                              backgroundColor="rgba(0,0,0,0.45)"
-                              px={10}
-                              py={6}
-                              borderRadius={20}
-                            >
-                              <ActivityIndicator color="#fff" size="small" />
-                            </View>
-                          </View>
-                        )}
+                        {loading && comments.length > 0 && <AppLoading />}
 
                         <FlatList
                           ref={flatListRef}
