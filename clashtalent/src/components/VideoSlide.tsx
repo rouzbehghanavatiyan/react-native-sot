@@ -19,9 +19,6 @@ export default function ShowWatchSlide({
   showLiked,
   showCountLiked,
 }: any) {
-  console.log("video?.isLikedInserted", video?.userInserted?.userName);
-  console.log("video?.isLikedInserted", video?.isLikedInserted);
-
   const resultInserted =
     video?.likeInserted > video?.likeMatched
       ? "Win"
@@ -97,6 +94,6 @@ const styles = StyleSheet.create({
     position: "relative",
     flex: 1,
     borderBottomWidth: 1,
-    borderBottomColor: "#000000",
+    borderBottomColor: "#111",
   },
 });

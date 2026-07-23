@@ -11,7 +11,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function VideoSection({
   score,
-  videoLikes,
   isLiked: externalIsLiked,
   isFollowed: externalIsFollowed,
   endTime,
@@ -71,11 +70,9 @@ export default function VideoSection({
 
       <View style={styles.videoContainer}>
         <View style={styles.videoCenter}>
-          <CustomVideo
-            handleVideo={() => console.log("clicked")}
-            player={player}
-          />
+          <CustomVideo player={player} />
           <OptionBottom
+            socket={socket}
             userIdLogin={userIdLogin}
             video={video}
             endTime={endTime}
@@ -117,7 +114,7 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1900ff",
+    backgroundColor: "#000",
     overflow: "hidden",
   },
 
@@ -129,6 +126,6 @@ const styles = StyleSheet.create({
   placeholder: {
     width: SCREEN_WIDTH,
     height: "100%",
-    backgroundColor: "#00ff0d",
+    backgroundColor: "#111",
   },
 });

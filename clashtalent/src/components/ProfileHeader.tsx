@@ -16,7 +16,7 @@ interface ProfileHeaderProps {
   setProfileImage?: (image: string) => void;
 }
 
-const ProfileHeader = forwardRef(
+const ProfileHeader = forwardRef<any, ProfileHeaderProps>(
   (
     {
       userImage,
@@ -25,8 +25,8 @@ const ProfileHeader = forwardRef(
       followersCount,
       followingCount,
       setProfileImage,
-    }: ProfileHeaderProps,
-    ref: React.ForwardedRef<any>,
+    },
+    ref,
   ) => {
     const dispatch = useAppDispatch();
     const main = useAppSelector((state) => state?.main);
@@ -36,8 +36,7 @@ const ProfileHeader = forwardRef(
     const handleImageProfileUpload = useCallback(async () => {
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permissionResult.granted) {
+      if (permissionResult.granted === false) {
         alert("You've refused to allow this app to access your photos!");
         return;
       }
@@ -49,38 +48,40 @@ const ProfileHeader = forwardRef(
         quality: 0.8,
       });
 
-      if (result.canceled || !result.assets?.length) return;
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const imageUri = result.assets[0].uri;
 
-      const imageUri = result.assets[0].uri;
-
-      setProfileImage?.(imageUri);
-
-      try {
-        const fileToUpload = {
-          uri: imageUri,
-          name: "profile.jpg",
-          type: "image/jpeg",
-        } as any;
-
-        const formData = new FormData();
-        formData.append("formFile", fileToUpload);
-        formData.append("attachmentId", String(userId));
-        formData.append("attachmentType", "pf");
-        formData.append("attachmentName", "profile");
-
-        const resAttachment = await addAttachment(formData);
-        const { status: attachmentStatus } = resAttachment?.data || {};
-
-        if (attachmentStatus === 0) {
-          const resProfileAttachment = await profileAttachment(userId);
-          const { status, data } = resProfileAttachment?.data || {};
-
-          if (status === 0) {
-            dispatch(RsetUserLogin(data));
-          }
+        if (setProfileImage) {
+          setProfileImage(imageUri);
         }
-      } catch (error) {
-        console.error("Error uploading profile image:", error);
+
+        try {
+          const fileToUpload = {
+            uri: imageUri,
+            name: "profile.jpg",
+            type: "image/jpeg",
+          } as any;
+
+          const formData = new FormData();
+          formData.append("formFile", fileToUpload);
+          formData.append("attachmentId", String(userId));
+          formData.append("attachmentType", "pf");
+          formData.append("attachmentName", "profile");
+
+          const resAttachment = await addAttachment(formData);
+          const { status: attachmentStatus, data: attachmentData } =
+            resAttachment?.data;
+
+          if (attachmentStatus === 0) {
+            const resProfileAttachment = await profileAttachment(userId);
+            const { status, data } = resProfileAttachment?.data;
+            if (status === 0) {
+              dispatch(RsetUserLogin(data));
+            }
+          }
+        } catch (error) {
+          console.error("Error uploading profile image:", error);
+        }
       }
     }, [userId, dispatch, setProfileImage]);
 
@@ -95,7 +96,6 @@ const ProfileHeader = forwardRef(
               imgSize={100}
             />
           </View>
-
           <YStack ml="$2" gap="$2" justifyContent="center">
             <Text fontSize="$6" fontWeight="bold" color="$textPrimary">
               {userName}
@@ -104,6 +104,7 @@ const ProfileHeader = forwardRef(
             <XStack gap="$4">
               <View
                 onPress={() => router.push("/(social)/followers")}
+                // onPress={() => navigation.navigate("/(social)/followers")}
                 alignItems="center"
                 px="$2"
                 py="$1"
@@ -119,6 +120,7 @@ const ProfileHeader = forwardRef(
 
               <View
                 onPress={() => router.push("/(social)/following")}
+                // onPress={() => navigation.navigate("/(social)/following")}
                 alignItems="center"
                 px="$2"
                 py="$1"
@@ -139,6 +141,6 @@ const ProfileHeader = forwardRef(
   },
 );
 
-ProfileHeader.displayName = "ProfileHeader";
-
 export default ProfileHeader;
+
+ProfileHeader.displayName = "ProfileHeader";

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Text, View, XStack } from "tamagui";
+import { Text, TextArea, View, XStack } from "tamagui";
 import { useAppSelector } from "../store/reduxHookType";
 import BaseButton from "./BaseButtom";
+import BaseInput from "./BaseInput";
 import { ButtonTimer } from "./ui/ButtonTimer";
 
 export const CoverConfirmStep: React.FC<any> = ({
@@ -25,89 +25,87 @@ export const CoverConfirmStep: React.FC<any> = ({
   // };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View p="$5">
-        {!!coverImage && (
-          <View mb="$4">
-            <Text fontWeight="bold" mb="$2" color="$white">
-              Your cover:
-            </Text>
+    <View p="$5">
+      {!!coverImage && (
+        <View mb="$4">
+          <Text fontWeight="bold" mb="$2" color="$textPrimary">
+            Your cover:
+          </Text>
 
-            <Image
-              source={{ uri: coverImage }}
-              alt="Video Cover"
-              style={{
-                width: "100%",
-                maxWidth: 400,
-                height: "87%",
-                resizeMode: "contain",
-                backgroundColor: "black",
-                alignSelf: "center",
-              }}
-            />
-          </View>
-        )}
+          <Image
+            source={{ uri: coverImage }}
+            alt="Video Cover"
+            style={{
+              width: "100%",
+              maxWidth: 400,
+              height: 300,
+              resizeMode: "contain",
+              backgroundColor: "black",
+              alignSelf: "center",
+            }}
+          />
+        </View>
+      )}
 
-        <View gap="$3" mb="$4">
-          {/* <View>
-            <Text mb="$1" color="$white">
-              Title
-            </Text>
-            <BaseInput
-              placeholder="Video title..."
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
-
-          <View>
-            <Text mb="$1" color="$white">
-              Description
-            </Text>
-            <TextArea
-              placeholder="Write something about your video..."
-              value={description}
-              onChangeText={setDescription}
-              minHeight={100}
-              borderRadius="$4"
-              borderWidth={1}
-              borderColor="$borderColor"
-              p="$3"
-              color="$textPrimary"
-              backgroundColor="$background"
-            />
-          </View> */}
+      <View gap="$3" mb="$4">
+        <View>
+          <Text mb="$1" color="$white">
+            Title
+          </Text>
+          <BaseInput
+            placeholder="Video title..."
+            value={title}
+            onChangeText={setTitle}
+          />
         </View>
 
-        <XStack
-          mt="$4"
-          justifyContent="space-between"
-          alignItems="center"
-          gap="$3"
-        >
-          <BaseButton
-            flex={1}
-            bg="$greenMain"
-            loading={isLoading}
-            onPress={onAccept}
-          >
-            {showTimerButtn ? (
-              <ButtonTimer show={showTimerButtn} startTime={120} />
-            ) : (
-              "Start"
-            )}
-          </BaseButton>
-          <BaseButton
-            flex={1}
-            size="$3"
-            bg="transparent"
-            chromeless
-            onPress={onBack}
-          >
-            Back
-          </BaseButton>
-        </XStack>
+        <View>
+          <Text mb="$1" color="$white">
+            Description
+          </Text>
+          <TextArea
+            placeholder="Write something about your video..."
+            value={description}
+            onChangeText={setDescription}
+            minHeight={100}
+            borderRadius="$4"
+            borderWidth={1}
+            borderColor="$borderColor"
+            p="$3"
+            color="$textPrimary"
+            backgroundColor="$background"
+          />
+        </View>
       </View>
-    </SafeAreaView>
+
+      <XStack
+        mt="$4"
+        justifyContent="space-between"
+        alignItems="center"
+        gap="$3"
+      >
+        <BaseButton
+          flex={1}
+          size="$3"
+          bg="transparent"
+          chromeless
+          onPress={onBack}
+        >
+          Back
+        </BaseButton>
+        <BaseButton
+          flex={1}
+          bg="$greenMain"
+          loading={isLoading}
+          onPress={onAccept}
+        >
+          {showTimerButtn ? (
+            <ButtonTimer show={showTimerButtn} startTime={120} />
+          ) : (
+            "Start"
+          )}
+        </BaseButton>
+      </XStack>
+    </View>
   );
 };

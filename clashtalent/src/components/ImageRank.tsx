@@ -11,9 +11,9 @@ const bronseBase3 = require("../assets/ranks/bronze.png");
 const silver1 = require("../assets/ranks/silver.png");
 const silver2 = require("../assets/ranks/silver.png");
 const silver3 = require("../assets/ranks/silver.png");
-const gold1 = require("../assets/ranks/goldMain.png");
-const gold2 = require("../assets/ranks/goldMain.png");
-const gold3 = require("../assets/ranks/goldMain.png");
+const gold1 = require("../assets/ranks/gold.png");
+const gold2 = require("../assets/ranks/gold.png");
+const gold3 = require("../assets/ranks/gold.png");
 const ruby = require("../assets/ranks/ruby.png");
 // const gem = require("../assets/ranks/gem.png");
 const word = require("../assets/ranks/world.png");
@@ -186,8 +186,9 @@ const ImageRank: React.FC<ProfileWithRankProps> = ({
             ? userInfo?.scoreMatched
             : userInfo?.score,
     };
+
     // @ts-ignore - navigation types may vary
-    navigation.navigate("profile", {
+    navigation.navigate("Profile", {
       userData,
     });
   };
@@ -330,8 +331,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   defaultUserName: {
-    color: "#bbbbbb",
-    marginLeft: 6,
+    color: "#1f2937",
   },
 });
 

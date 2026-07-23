@@ -27,6 +27,7 @@ const AppHeader = () => {
   );
   
   const titleMap: Record<string, string> = {
+    "/topScore": "Top score",
     "/profile": "Profile",
     "/notification": "Notifications",
   };
@@ -71,12 +72,7 @@ const AppHeader = () => {
         style={{ marginLeft: 16 }}
       >
         <View>
-          <Ionicons
-            name="mail-outline"
-            onPress={() => router.push("/chat")}
-            size={22}
-            color="#10153D"
-          />
+          <Ionicons name="mail-outline" size={22} color="#10153D" />
           {unreadCount > 0 && <View style={styles.badge} />}
         </View>
       </TouchableOpacity>
@@ -105,7 +101,9 @@ const AppHeader = () => {
       </View>
 
       {routes.isProfile ? (
-        <TouchableOpacity onPress={() => router.push("/setting")}>
+        <TouchableOpacity
+        // onPress={() => router.push("/setting")}
+        >
           <Ionicons name="settings-outline" size={22} color="#10153D" />
         </TouchableOpacity>
       ) : (

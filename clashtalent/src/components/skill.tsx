@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { View } from "tamagui";
 import { subCategoryList } from "../services/masterServices";
@@ -17,8 +16,7 @@ const Skill: React.FC<any> = ({
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigation = useNavigation();
-  const [step, setStep] = useState(1);
-  const router = useRouter();
+
   const handleGetCategory = asyncWrapper(async () => {
     setIsLoading(true);
     const res = await subCategoryList(currentStep?.arena?.id);
@@ -63,16 +61,9 @@ const Skill: React.FC<any> = ({
     return acc;
   }, {});
 
-  const handleBack = () => {
-    if (step > 1) {
-      setStep((prev) => prev - 1);
-    } else {
-      router.back();
-    }
-  };
   return (
     <View borderRadius="$2">
-      <MainTitle handleBack={handleBack} title="Skill" />
+      <MainTitle title="Skill" />
       <SoftLink
         iconMap={arenaIconMap}
         handleAcceptCategory={handleAcceptCategory}

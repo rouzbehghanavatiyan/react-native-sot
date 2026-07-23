@@ -8,9 +8,9 @@ import {
   removeInvite,
 } from "../services/masterServices";
 import { logger } from "../utils/logger";
-import { socketClient } from "../utils/socketClient";
 import { RsetShowTimerButtn } from "./main";
 import { VideoState } from "./type";
+import { socketClient } from "../utils/socketClient";
 
 const initialState: VideoState = {
   videoSrc: null,
@@ -38,6 +38,7 @@ const initialState: VideoState = {
 export const prepareVideoFileThunk = createAsyncThunk(
   "video/prepareFile",
   async (fileAsset: any) => {
+    // fileAsset چیزی شبیه به { uri: '...', fileName: '...', mimeType: '...' } است
     const src = fileAsset.uri;
     return { file: fileAsset, src };
   },
@@ -54,111 +55,146 @@ export const removeInviteThunk = createAsyncThunk(
 export const uploadFullProcessThunk = createAsyncThunk(
   "video/uploadFullProcess",
   async (
-    { userId, gearId, mode, allFormData, movieMeta, router }: any,
+    { userId, gearId, mode, allFormData, socket, movieMeta, router }: any,
     { rejectWithValue, dispatch },
   ) => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     try {
-      const gearIdStorage = await AsyncStorage.getItem("gearId");
+      const storedGearId = await AsyncStorage.getItem("gearId");
 
       const postData = {
         userId,
-        description: allFormData?.description || movieMeta?.desc || "",
-        title: allFormData?.title || movieMeta?.title || "",
-        subSubCategoryId:
-          allFormData?.subSubCategoryId || gearId || gearIdStorage,
-        modeId: 3,
+        description: movieMeta?.desc ?? "",
+        title: movieMeta?.title ?? "",
+        subSubCategoryId: gearId || storedGearId || null,
+        modeId: mode?.typeMode || null,
       };
 
-      logger.info("postData postData postData", postData);
-
       const movieRes = await addMovie(postData);
-      const movieDataRes = movieRes?.data?.data;
+      const movieDataRes = movieRes?.data;
+      const movieId = movieRes?.data?.data?.id;
 
-      if (movieRes?.data?.status !== 0) {
+      logger.info("addMovie response", movieRes);
+
+      if (movieDataRes?.status !== 0) {
         throw new Error("Error in recording initial movie information");
       }
 
+      if (!movieId) {
+        throw new Error("Movie id is missing");
+      }
+
       const formData = new FormData();
-      formData.append("formFile", allFormData?.video);
-      // formData.append("formFile", allFormData?.imageCover);
-      formData.append("attachmentId", movieDataRes?.id);
+
+      if (allFormData?.video) {
+        formData.append("formFile", {
+          uri: allFormData.video.uri,
+          name: allFormData.video.name || "video.mp4",
+          type: allFormData.video.type || "video/mp4",
+        } as any);
+      }
+
+      if (allFormData?.imageCover) {
+        formData.append("formFile", {
+          uri: allFormData.imageCover.uri,
+          name: allFormData.imageCover.name || "cover.jpg",
+          type: allFormData.imageCover.type || "image/jpeg",
+        } as any);
+      }
+
+      formData.append("attachmentId", String(movieId));
       formData.append("attachmentType", "mo");
       formData.append("attachmentName", "movies");
-      // formData.append("width", "300");
-      // formData.append("height", "300");
-      for (let pair of formData.entries()) {
-        console.log(`${pair[0]}:`, pair[1]);
-      }
+
+      logger.info("attachment formData", formData);
+
       const attachRes = await addAttachment(formData);
-      logger.info("attachRes attachRes attachRes", attachRes);
 
       if (attachRes?.data?.status !== 0) {
-        throw new Error("Error uploading attachments");
+        throw new Error("Error in recording movie attachment!");
       }
 
-      const requestData = {
+      const postInvite = {
         parentId: null,
-        userId: Number(userId),
-        movieId: Number(movieDataRes?.id),
+        userId: userId || null,
+        movieId: movieId || null,
         status: 0,
+        inviteId: null,
       };
 
-      const inviteRes = await addInvite(requestData);
+      const inviteRes = await addInvite(postInvite);
+
+      logger.info("invite response", inviteRes);
+
+      // if (inviteRes?.data?.status !== 0) {
+      //   throw new Error("Error in creating invite");
+      // }
+
       const inviteData = inviteRes?.data?.data;
-      logger.info("inviteRes inviteRes inviteRes", inviteRes);
+
       dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(true));
-      socketClient.emit("register_user", userId);
-      socketClient.emit("add_invite_offline", {
-        ...inviteData,
-        senderUserId: userId,
+
+      if (!socketClient || !socketClient.connected) {
+        timeoutId = setTimeout(() => {
+          dispatch(RsetShowTimerButtn(false));
+          Alert.alert("socketClient is not connected. Please try again.");
+        }, 60000);
+
+        return {
+          modeType: mode?.typeMode,
+          movieData: movieDataRes,
+          inviteData,
+        };
+      }
+
+      const socketResult: any = await new Promise((resolve, reject) => {
+        socketClient
+          .timeout(20000)
+          .emit("add_invite_offline", inviteData, (err: any, response: any) => {
+            if (err) {
+              reject(new Error("Socket timeout"));
+              return;
+            }
+
+            resolve(response);
+          });
       });
-      socketClient.once("receive_invite", (matchData: any) => {
-        console.log("✅✅✅✅✅✅✅ Match found!", timeoutId, matchData);
-        if (timeoutId) clearTimeout(timeoutId);
-        dispatch(RsetShowTimerButtn(false));
+
+      logger.info("add_invite_offline socketResult", socketResult);
+
+      if (socketResult?.status !== 0) {
+        throw new Error(socketResult?.message || "Socket invite failed");
+      }
+
+      /**
+       * اگر socket موفق بود، تایمر را خاموش کن
+       */
+      if (timeoutId) clearTimeout(timeoutId);
+
+      dispatch(RsetShowTimerButtn(false));
+
+      /**
+       * Redirect به profile بعد از موفقیت socket
+       */
+      if (router) {
         router.replace("/(tabs)/profile");
-      });
-
-      let isMatched = false;
-
-      const handleReceiveInvite = (data: any) => {
-        console.log("✅ Match created:", data);
-        isMatched = true;
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        dispatch(RsetShowTimerButtn(false));
-        socketClient.off("receive_invite", handleReceiveInvite);
-      };
-      socketClient.once("receive_invite", handleReceiveInvite);
-      timeoutId = setTimeout(() => {
-        if (isMatched) return;
-        socketClient.off("receive_invite", handleReceiveInvite);
-        dispatch(RsetShowTimerButtn(false));
-        Alert.alert(
-          "No Match Found",
-          "Unfortunately, no tournament match was found.",
-        );
-
-        router.replace("/(tabs)/watch");
-      }, 120000);
+      }
 
       return {
         modeType: mode?.typeMode,
         movieData: movieDataRes,
         inviteData,
+        socketResult,
       };
     } catch (error: any) {
       if (timeoutId) clearTimeout(timeoutId);
+
       dispatch(RsetIsLoading(false));
       dispatch(RsetShowTimerButtn(false));
 
-      console.log("❌ Upload error:", error);
-      Alert.alert("Error", error?.message || "Upload failed");
+      Alert.alert(error?.message || "Upload failed");
 
       return rejectWithValue(error.message || "Upload failed");
     }

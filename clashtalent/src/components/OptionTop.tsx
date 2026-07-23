@@ -1,12 +1,10 @@
 import { addFollower, removeFollower } from "@/src/services/masterServices";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable } from "react-native";
-import { View, XStack } from "tamagui";
+import { Popover, Separator, Text, View, XStack } from "tamagui";
 import { getImageUrl } from "../utils/fileHelper";
-import DropDownOption, { DropDownItem } from "./DropDownOption";
 import Follows from "./Follows";
 import ImageRank from "./ImageRank";
 
@@ -15,7 +13,9 @@ interface OptionTopProps {
   positionVideo: number;
   openDropdowns: { [key: number]: boolean };
   score: any;
-  setOpenDropdowns: any;
+  setOpenDropdowns: React.Dispatch<
+    React.SetStateAction<{ [key: number]: boolean }>
+  >;
   toggleDropdown: (position: string) => void;
   dropdownItems: (video: any) => any[];
   userIdLogin: string | null;
@@ -30,21 +30,9 @@ const OptionTop: React.FC<OptionTopProps> = ({
   userIdLogin,
   main,
 }) => {
-  const router = useRouter();
   const [localIsFollowed, setLocalIsFollowed] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const currentUserId = main?.userLogin?.user?.id;
-  const moreButtonRef = useRef<any>(null);
-  const [anchor, setAnchor] = useState<any>(null);
-
-  const handleOpenMenu = () => {
-    // موقعیت واقعی آیکون more-vert رو نسبت به صفحه (window) اندازه می‌گیریم
-    moreButtonRef.current?.measureInWindow((x, y, width, height) => {
-      setAnchor({ x, y, width, height });
-      setMenuOpen(true);
-    });
-  };
 
   const profile =
     positionVideo === 0
@@ -57,99 +45,68 @@ const OptionTop: React.FC<OptionTopProps> = ({
 
   const userInfo =
     positionVideo === 0 ? video?.userInserted : video?.userMatched;
+
   const checkMyVideo =
     userInfo?.id && currentUserId ? userInfo.id !== currentUserId : false;
-  const userScore =
-    positionVideo === 0 ? video?.scoreInserted : video?.scoreMatched;
 
   useEffect(() => {
-    const isFollowed =
-      positionVideo === 0
-        ? video?.isFollowedMeInserted
-        : video?.isFollowedMeMatched;
-    setLocalIsFollowed(!!isFollowed);
+    const getInitialFollowStatus = () => {
+      try {
+        if (positionVideo === 0) {
+          return video?.isFollowedMeInserted === true;
+        } else {
+          return video?.isFollowedMeMatched === true;
+        }
+      } catch (error) {
+        console.error("Error getting follow status:", error);
+        return false;
+      }
+    };
+
+    setLocalIsFollowed(getInitialFollowStatus());
   }, [video, positionVideo]);
 
-  const handleFallowClick = async () => {
+  const handleFallowClick = async (video: any, position: number) => {
     if (isLoadingFollow) return;
     const userIdFollow =
-      positionVideo === 0 ? video?.userInserted?.id : video?.userMatched?.id;
+      position === 0 ? video?.userInserted?.id : video?.userMatched?.id;
     const postData = {
       userId: userIdLogin || null,
       followerId: userIdFollow || null,
     };
+
+    const newFollowStatus = !localIsFollowed;
+
     try {
       setIsLoadingFollow(true);
+
       if (localIsFollowed) {
         await removeFollower(postData);
+        console.log("Unfollow successful");
       } else {
         await addFollower(postData);
+        console.log("Follow successful");
       }
-      setLocalIsFollowed(!localIsFollowed);
+
+      setLocalIsFollowed(newFollowStatus);
     } catch (error) {
       console.error("Error in follow operation:", error);
+      setLocalIsFollowed(localIsFollowed);
     } finally {
       setIsLoadingFollow(false);
     }
   };
 
-  const handleSendMessage = () => {
-    if (!userInfo?.id) return;
-
-    router.push({
-      pathname: `/chat/${userInfo.id}`,
-      params: {
-        userId: String(userInfo.id),
-        userName: userInfo?.userName || "",
-        score: String(userScore || ""),
-        profile: profile || "",
-      },
-    });
+  const getDropdownItems = () => {
+    try {
+      return dropdownItems && typeof dropdownItems === "function"
+        ? dropdownItems(video)
+        : [];
+    } catch (error) {
+      console.error("Error getting dropdown items:", error);
+      return [];
+    }
   };
-
-  const handleReport = () => {
-    if (!userInfo?.id) return;
-
-    console.log("Report user:", userInfo.id);
-  };
-
-  const handleSave = () => {
-    console.log("Save video:", video);
-  };
-
-  const menuItems = useMemo<DropDownItem[]>(
-    () => [
-      {
-        label: "Send Message",
-        icon: "chat",
-        onPress: handleSendMessage,
-      },
-      {
-        label: "Save",
-        icon: "grade",
-        onPress: handleSave,
-      },
-      {
-        label: "Report",
-        icon: "flag",
-        onPress: handleReport,
-        danger: true,
-      },
-    ],
-    [userInfo?.id, userInfo?.userName, userScore, profile, video],
-  );
-
-  const getMenuItems = () => {
-    const customItems = [
-      { label: "Send Message", icon: "chat", onClick: handleSendMessage },
-      { label: "Report", icon: "flag", onClick: handleReport },
-      { label: "Save", icon: "grade", onClick: handleReport },
-      // { label: "duel", icon: "handshake", onClick: handleReport },
-    ];
-    return { items: customItems };
-  };
-
-  const isTopPosition = positionVideo === 0;
 
   return (
     <View position="absolute" top={0} left={0} right={0} zIndex={1}>
@@ -179,30 +136,74 @@ const OptionTop: React.FC<OptionTopProps> = ({
             {checkMyVideo && (
               <Follows
                 title={localIsFollowed ? "Unfollow" : "Follow"}
-                onFollowClick={handleFallowClick}
+                onFollowClick={() => handleFallowClick(video, positionVideo)}
                 bgColor="white"
               />
             )}
           </View>
           <View flex={1} alignItems="flex-end">
             {checkMyVideo && (
-              <>
-                <View ref={moreButtonRef} collapsable={false}>
-                  <Pressable
-                    hitSlop={10}
-                    style={{ padding: 4 }}
-                    onPress={handleOpenMenu}
-                  >
+              <Popover size="$5" allowFlip placement="bottom-end">
+                <Popover.Trigger asChild>
+                  <Pressable hitSlop={10} style={{ padding: 4 }}>
                     <MaterialIcons name="more-vert" size={28} color="white" />
                   </Pressable>
-                </View>
-                <DropDownOption
-                  visible={menuOpen}
-                  onClose={() => setMenuOpen(false)}
-                  items={menuItems}
-                  anchor={anchor}
-                />
-              </>
+                </Popover.Trigger>
+
+                <Popover.Content
+                  borderWidth={1}
+                  borderColor="$borderColor"
+                  enterStyle={{ y: -10, opacity: 0 }}
+                  exitStyle={{ y: -10, opacity: 0 }}
+                  elevate
+                  // animation={[
+                  //   "quick",
+                  //   {
+                  //     opacity: {
+                  //       overshootClamping: true,
+                  //     },
+                  //   },
+                  // ]}
+                >
+                  <Popover.Arrow borderWidth={1} borderColor="$borderColor" />
+                  <View w={190} p="$2">
+                    {getDropdownItems().map((item: any, index: number) => {
+                      if (item.divider) {
+                        return (
+                          <Separator
+                            key={`divider-${index}`}
+                            my="$2"
+                            w="100%"
+                          />
+                        );
+                      }
+                      return (
+                        <View
+                          key={index}
+                          onPress={item.onClick}
+                          cursor="pointer"
+                          p="$2"
+                          pressStyle={{ backgroundColor: "$backgroundHover" }}
+                          borderRadius="$2"
+                        >
+                          <XStack gap="$3" alignItems="center" w="100%">
+                            {item.icon && (
+                              <MaterialIcons
+                                name={item.icon}
+                                size={20}
+                                color="#4b5563"
+                              />
+                            )}
+                            <Text fontSize="$4" color="$textPrimary">
+                              {item.label}
+                            </Text>
+                          </XStack>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </Popover.Content>
+              </Popover>
             )}
           </View>
         </XStack>

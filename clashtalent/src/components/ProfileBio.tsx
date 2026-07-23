@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Pressable } from "react-native";
 import {
   Image,
@@ -10,8 +10,6 @@ import {
   XStack,
   YStack,
 } from "tamagui";
-import { getStatus } from "../services/nestServices";
-import { Icon } from "./Icon";
 
 const Started = require("../assets/ranks/starter.png");
 const bronseBase1 = require("../assets/ranks/bronze.png");
@@ -27,11 +25,15 @@ const ruby = require("../assets/ranks/ruby.png");
 const word = require("../assets/ranks/world.png");
 
 interface ProfileBioProps {
+  bio: string;
+  location: string;
+  website: string;
   rankPercentage: number;
   rankScore: number;
 }
 
 const rankCategories = [
+  // ... (داده‌ها مشابه قبل)
   {
     title: "Starter",
     ranks: [{ name: "Starter", img: Started }],
@@ -47,33 +49,12 @@ const rankCategories = [
 ];
 
 const ProfileBio: React.FC<ProfileBioProps> = ({
+  bio,
+  location,
+  website,
   rankScore,
   rankPercentage,
 }) => {
-  const [fields, setFields] = useState<any>();
-
-  const fetchCurrentStatus = async () => {
-    try {
-      const response = await getStatus();
-      console.log(
-        "responseresponseresponseresponseresponseresponseresponseresponseresponseresponseresponse",
-        response,
-      );
-      const { code, message, data } = response?.data;
-
-      if (code === 0) {
-        setFields(data);
-      }
-    } catch (error) {
-      console.log("Error fetching status:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchCurrentStatus();
-    console.log("VVVVVVVVVVVVVVVVVVVVVVVVVV");
-  }, []);
-
   return (
     <YStack px="$4" alignItems="center" w="100%">
       <Popover size="$5" allowFlip placement="bottom">
@@ -88,7 +69,7 @@ const ProfileBio: React.FC<ProfileBioProps> = ({
               position="relative"
             >
               <Progress value={rankPercentage} h={16} bg="transparent">
-                <Progress.Indicator bg="$indigoDark" />
+                <Progress.Indicator bg="$primaryMain" />
               </Progress>
               <View
                 position="absolute"
@@ -186,30 +167,12 @@ const ProfileBio: React.FC<ProfileBioProps> = ({
         </Popover.Content>
       </Popover>
 
-      <YStack w="100%" mt="$5" alignItems="flex-start" gap="$3">
-        {fields?.bio && (
-          <Text color="$textPrimary" fontSize="$3" lineHeight={20} mb="$1">
-            {fields?.bio}
-          </Text>
-        )}
-
-        {fields?.location && (
-          <XStack alignItems="center" gap="$2">
-            <Icon name="location-on" size={16} color="#777777" />
-            <Text color="$textSecondary" fontSize="$3">
-              {fields?.location}
-            </Text>
-          </XStack>
-        )}
-
-        {fields?.website && (
-          <XStack alignItems="center" gap="$2">
-            <Icon name="language" size={16} color="#007aff" />
-            <Text fontWeight="600" color="$infoMain" fontSize="$3">
-              {fields?.website}
-            </Text>
-          </XStack>
-        )}
+      <YStack w="100%" mt="$5" alignItems="flex-start" gap="$4">
+        <Text color="$textPrimary">{bio}</Text>
+        <Text color="$textPrimary">{location}</Text>
+        <Text fontWeight="bold" color="$infoMain">
+          {website}
+        </Text>
       </YStack>
     </YStack>
   );

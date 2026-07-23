@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -15,14 +16,15 @@ const MainTitle: React.FC<PropType> = ({
   showBack = true,
   rightComponent,
 }) => {
-  // const router = useRouter();
-  // const onBack = handleBack ?? (showBack ? () => router.back() : undefined);
+  const router = useRouter();
+
+  const onBack = handleBack ?? (showBack ? () => router.back() : undefined);
 
   return (
     <View style={styles.container}>
       <View style={styles.side}>
-        {handleBack && (
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#7b8377" />
           </TouchableOpacity>
         )}

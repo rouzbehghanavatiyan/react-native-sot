@@ -1,4 +1,3 @@
-import VideoSkeleton from "@/src/components/VideoSkeleton";
 import ShowWatchSlide from "@/src/components/VideoSlide";
 import { useShowWatch } from "@/src/hook/useShowWatch";
 import { followerAttachmentList } from "@/src/services/masterServices";
@@ -26,21 +25,22 @@ const HomeScreen: React.FC = () => {
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const usableHeight: any = height - headerHeight - tabBarHeight;
-
   const [showComments, setShowComments] = useState(false);
+  const [commentInfo, setCommentInfo] = useState<any>(null);
   const [commentPosition, setCommentPosition] = useState(0);
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
 
+  console.log("Home render showComments:", showComments);
+  console.log("selectedVideo:", selectedVideo);
+  console.log("commentInfo:", commentInfo);
+  console.log("commentPosition:", commentPosition);
+
   const handleOpenComments = useCallback((video: any, position: number) => {
+    console.log("handleOpenComments called", { video, position });
     setSelectedVideo(video);
+    setCommentInfo(video);
     setCommentPosition(position ?? 0);
     setShowComments(true);
-  }, []);
-
-  const handleCloseComments = useCallback(() => {
-    setShowComments(false);
-    setSelectedVideo(null);
-    setCommentPosition(0);
   }, []);
 
   const customFetchNextPage = useCallback(
@@ -59,6 +59,8 @@ const HomeScreen: React.FC = () => {
         });
 
         hasFetchedOnce.current = true;
+
+        console.log("API DATA ARRAY", res?.data?.data);
 
         return res?.data?.data || [];
       } catch (error) {
@@ -96,8 +98,6 @@ const HomeScreen: React.FC = () => {
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: any }) => {
-      logger.info("viewableItems", viewableItems);
-
       if (viewableItems && viewableItems.length > 0) {
         const visibleItem = viewableItems[0];
         if (visibleItem.index !== null) {
@@ -108,6 +108,8 @@ const HomeScreen: React.FC = () => {
     },
   ).current;
 
+  logger.info("home data", data);
+
   const showInitialLoader =
     !hasFetchedOnce.current && (!data || data.length === 0);
   const showEmptyState =
@@ -116,7 +118,9 @@ const HomeScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {showInitialLoader ? (
-        <VideoSkeleton count={1} section="itsHome" isSwapper={false} />
+        <View style={styles.loaderWrapper}>
+          <Text>Loading...</Text>
+        </View>
       ) : showEmptyState ? (
         <View style={styles.emptyWrapper}>
           <View style={styles.emptyCard}>
@@ -131,7 +135,6 @@ const HomeScreen: React.FC = () => {
         <View style={{ flex: 1, width, height: usableHeight }}>
           <FlashList
             data={data || []}
-            extraData={currentlyPlayingId}
             keyExtractor={(item, index) =>
               item?.id?.toString() || index.toString()
             }
@@ -143,6 +146,7 @@ const HomeScreen: React.FC = () => {
               <View style={{ width, height: usableHeight }}>
                 <ShowWatchSlide
                   showLiked={false}
+                  endTime={false}
                   showScore
                   showResult
                   showCountLiked
@@ -161,20 +165,23 @@ const HomeScreen: React.FC = () => {
           />
         </View>
       )}
-      {showComments && (
-        <View
-          style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}
-          pointerEvents="auto"
-        >
-          <Comments
-            visible={showComments}
-            onClose={handleCloseComments}
-            video={selectedVideo}
-            positionVideo={commentPosition}
-            userIdLogin={userIdLogin}
-          />
-        </View>
-      )}
+      <View
+        style={[StyleSheet.absoluteFillObject, { zIndex: 9999 }]}
+        pointerEvents={showComments ? "auto" : "none"}
+      >
+        <Comments
+          visible={showComments}
+          onClose={() => {
+            setShowComments(false);
+            setCommentInfo(null);
+            setSelectedVideo(null);
+            setCommentPosition(0);
+          }}
+          video={commentInfo}
+          positionVideo={commentPosition}
+          userIdLogin={userIdLogin}
+        />
+      </View>
     </View>
   );
 };
