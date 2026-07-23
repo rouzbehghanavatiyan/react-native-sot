@@ -133,3 +133,8 @@ export const addLike = async (data: any) => {
 export const removeLike = async (postData: any) => {
   return await api.delete(`/removeLike`, { data: postData });
 };
+
+// export const allUserMessagese = async (userIdLogin: number) => {
+//   const url = `${baseURL}/chat/allUserMessagese?userIdLogin=${userIdLogin}`;
+//   return await api.get(url);
+// };

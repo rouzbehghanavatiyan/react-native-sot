@@ -38,7 +38,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <MaterialIcons name="arrow-back" size={26} color="#4B5563" />
         </Pressable>
       </View>
-
       <View flex={7}>
         <ImageRank
           userName={userName || "Unknown User"}

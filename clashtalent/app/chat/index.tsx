@@ -1,6 +1,6 @@
 import ImageRank from "@/src/components/ImageRank";
 import MainTitle from "@/src/components/MainTitle";
-import { allUserMessagese } from "@/src/services/masterServices";
+import { allUserMessagese } from "@/src/services/nestServices";
 import { useAppSelector } from "@/src/store/reduxHookType";
 import { getImageUrl } from "@/src/utils/fileHelper";
 import { socketClient } from "@/src/utils/socketClient";
